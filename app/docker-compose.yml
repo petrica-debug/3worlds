@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./backend:/app
+
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: threeworlds
+      POSTGRES_USER: tw_user
+      POSTGRES_PASSWORD: tw_dev_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Redis (cache + task queue)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Celery Worker (background tasks: SDS generation, batch classification)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A services.tasks worker --loglevel=info
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  pgdata:

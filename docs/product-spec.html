@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Spec — Three Worlds Chemical Intelligence Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f7f5f0;--card:#fff;--text:#1a1a1a;--text2:#555;--text3:#888;--gold:#b8941f;--gold-dim:rgba(184,148,31,.1);--blue:#2563eb;--green:#059669;--border:#e0dcd4;--radius:16px;--shadow:0 2px 12px rgba(0,0,0,.06);--red:#dc2626}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+.page{max-width:920px;margin:0 auto;padding:3rem 2rem}
+h1{font-family:'Playfair Display',serif;font-size:2.6rem;font-weight:800;letter-spacing:-1px;margin-bottom:.5rem}
+h1 span{color:var(--gold)}
+.subtitle{color:var(--text2);font-size:1.05rem;margin-bottom:2.5rem}
+h2{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;margin:2.5rem 0 1rem;letter-spacing:-.5px}
+h3{font-size:.95rem;font-weight:700;margin:1.2rem 0 .4rem}
+p{color:var(--text2);margin-bottom:.8rem;font-size:.92rem}
+strong{color:var(--text)}
+.card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.8rem;margin:1.2rem 0;box-shadow:var(--shadow)}
+.tag{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:.4rem}
+.tag-gold{color:var(--gold)}
+.tag-blue{color:var(--blue)}
+.tag-green{color:var(--green)}
+.tag-red{color:var(--red)}
+.divider{height:1px;background:var(--border);margin:2.5rem 0}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.2rem}
+@media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.metric{text-align:center;padding:1.5rem}
+.metric-num{font-size:2rem;font-weight:800;font-family:'Playfair Display',serif}
+.metric-label{font-size:.75rem;color:var(--text3);margin-top:.2rem}
+.phase{border-left:3px solid var(--border);padding-left:1.5rem;margin:1.5rem 0}
+.phase-active{border-left-color:var(--gold)}
+.pill{display:inline-block;font-size:.7rem;font-weight:600;padding:.25rem .6rem;border-radius:100px;margin:.1rem;border:1px solid var(--border)}
+.pill-gold{color:var(--gold);border-color:rgba(184,148,31,.3);background:var(--gold-dim)}
+.pill-blue{color:var(--blue);border-color:rgba(37,99,235,.15);background:rgba(37,99,235,.06)}
+.pill-green{color:var(--green);border-color:rgba(5,150,105,.15);background:rgba(5,150,105,.06)}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:1rem 0}
+th{text-align:left;font-weight:700;padding:.6rem .8rem;border-bottom:2px solid var(--border);font-size:.75rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3)}
+td{padding:.6rem .8rem;border-bottom:1px solid var(--border);color:var(--text2)}
+.highlight{background:var(--gold-dim);border:2px solid var(--gold);position:relative}
+.confidential{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:2rem;padding:.5rem 1rem;border:1px solid var(--border);border-radius:8px;display:inline-block}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="confidential">Confidential — Three Worlds / BelgaLabs</div>
+
+<h1>Product <span>Specification</span></h1>
+<p class="subtitle">Three Worlds Chemical Intelligence Platform — AI-powered REACH compliance and green hydrogen intelligence for European industry.</p>
+
+<div class="grid-3">
+  <div class="card metric"><div class="metric-num" style="color:var(--gold)">€2M</div><div class="metric-label">Revenue target (36 months)</div></div>
+  <div class="card metric"><div class="metric-num" style="color:var(--blue)">30,000+</div><div class="metric-label">Companies affected by REACH</div></div>
+  <div class="card metric"><div class="metric-num" style="color:var(--green)">€470B</div><div class="metric-label">EU Hydrogen Strategy investment</div></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>1. The Problem</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="tag tag-gold">REACH Compliance</div>
+    <h3>Chemical SMEs are drowning in regulation</h3>
+    <p>REACH (EC 1907/2006) requires registration of every chemical substance manufactured or imported into the EU above 1 tonne/year. Compliance costs <strong>€50K-€500K per substance</strong>. The process involves hazard classification (CLP), exposure modeling, Chemical Safety Reports, Safety Data Sheets, and IUCLID dossier preparation.</p>
+    <p>Most SMEs use <strong>manual processes or expensive consultants</strong>. Legacy software (IUCLID, Chesar) is free but painfully complex. There's no AI-native solution that automates the heavy lifting.</p>
+  </div>
+  <div class="card">
+    <div class="tag tag-blue">H2 Intelligence</div>
+    <h3>Hydrogen projects fly blind on catalyst selection</h3>
+    <p>The EU hydrogen economy is scaling fast (REPowerEU, IPCEI). Project developers must choose catalysts, predict performance, model economics, and navigate subsidy eligibility — often with incomplete data and expensive consultants.</p>
+    <p><strong>No platform exists</strong> that combines catalyst chemistry knowledge with techno-economic modeling and EU funding intelligence. Decisions worth millions are made on spreadsheets.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>2. The Solution</h2>
+
+<div class="card highlight">
+  <h3>One platform. Two intelligence modules. Shared AI engine.</h3>
+  <p>Three Worlds Chemical Intelligence is a B2B SaaS platform that uses AI (LLMs + domain-specific ML models) to automate chemical compliance and hydrogen project assessment. Built by a PhD chemist who understands the science, not just the software.</p>
+</div>
+
+<div class="grid-2" style="margin-top:1.5rem">
+  <div class="card" style="border-top:3px solid var(--gold)">
+    <div class="tag tag-gold">Module 1 — REACH Engine</div>
+    <h3>AI-Powered Chemical Compliance</h3>
+    <p><strong>Substance Identification & Grouping:</strong> Upload chemical data → AI identifies substances, groups analogues, and suggests read-across strategies.</p>
+    <p><strong>Hazard Classification (CLP):</strong> AI predicts GHS classifications using QSAR models trained on ECHA's registered substances database. Reduces manual toxicology assessment by 70%.</p>
+    <p><strong>Safety Data Sheet Generation:</strong> Automated SDS creation in all EU languages, compliant with Annex II format. AI fills sections from chemical properties and regulatory data.</p>
+    <p><strong>Dossier Preparation:</strong> Pre-fills IUCLID format dossiers. AI generates robust study summaries, exposure scenarios, and Chemical Safety Reports.</p>
+    <p><strong>Regulatory Monitoring:</strong> Real-time alerts on SVHC candidate list updates, restriction proposals, and authorization deadlines.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <div class="tag tag-blue">Module 2 — H2 Intelligence</div>
+    <h3>Green Hydrogen Project Assessment</h3>
+    <p><strong>Catalyst Selection Engine:</strong> AI recommends optimal catalyst formulations (Ru, Ni, Fe-based) for ammonia cracking, water electrolysis, and steam reforming based on project parameters.</p>
+    <p><strong>Performance Prediction:</strong> ML models trained on published catalysis literature predict conversion rates, selectivity, degradation curves, and operational lifetimes.</p>
+    <p><strong>Techno-Economic Modeling:</strong> Input project specs → get CAPEX, OPEX, LCOH (Levelized Cost of Hydrogen), IRR, and payback period projections.</p>
+    <p><strong>EU Funding Navigator:</strong> Maps project characteristics to eligible funding programs (Innovation Fund, IPCEI, REPowerEU, Horizon Europe). Generates eligibility scorecards.</p>
+    <p><strong>Due Diligence Reports:</strong> One-click generation of investor-ready technical feasibility reports for hydrogen projects.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>3. Market & Customers</h2>
+
+<div class="card">
+  <h3>Primary Market: REACH Compliance (Launch Market)</h3>
+  <table>
+    <tr><th>Segment</th><th>Size</th><th>Pain Level</th><th>Budget</th></tr>
+    <tr><td><strong>Chemical SMEs (EU)</strong> — manufacturers, importers, formulators</td><td>~12,000 companies</td><td>Critical — face fines up to €50K/violation</td><td>€10-50K/year for compliance</td></tr>
+    <tr><td><strong>Only Representatives</strong> — companies representing non-EU manufacturers</td><td>~800 firms</td><td>High — handle multiple dossiers</td><td>€20-100K/year per client</td></tr>
+    <tr><td><strong>REACH Consultancies</strong> — reseller/partner channel</td><td>~500 firms</td><td>Medium — tool augments their work</td><td>€5-30K/year per license</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Expansion Market: H2 Intelligence (Month 8+)</h3>
+  <table>
+    <tr><th>Segment</th><th>Size</th><th>Pain Level</th><th>Budget</th></tr>
+    <tr><td><strong>H2 Project Developers</strong> — planning production facilities</td><td>~2,000 active projects in EU</td><td>High — millions at stake per decision</td><td>€20-100K per assessment</td></tr>
+    <tr><td><strong>Impact Investors / DFIs</strong> — evaluating hydrogen deals</td><td>~200 active funds</td><td>Medium — need technical due diligence</td><td>€10-50K per report</td></tr>
+    <tr><td><strong>Governments / Agencies</strong> — evaluating subsidy applications</td><td>27 EU member states + agencies</td><td>High — lack technical capacity</td><td>€50-200K per contract</td></tr>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>4. Business Model</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="tag tag-gold">SaaS Subscriptions</div>
+    <h3>Recurring Revenue</h3>
+    <table>
+      <tr><th>Tier</th><th>Price</th><th>Includes</th></tr>
+      <tr><td><strong>Starter</strong></td><td>€299/mo</td><td>5 substances, SDS generation, CLP classification, 1 user</td></tr>
+      <tr><td><strong>Professional</strong></td><td>€899/mo</td><td>25 substances, full dossier support, regulatory alerts, 5 users</td></tr>
+      <tr><td><strong>Enterprise</strong></td><td>€2,499/mo</td><td>Unlimited substances, H2 module, API access, custom models, dedicated support</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="tag tag-blue">Project-Based Revenue</div>
+    <h3>High-Value Engagements</h3>
+    <p><strong>H2 Feasibility Reports:</strong> €15-50K per project assessment (platform-generated + expert review)</p>
+    <p><strong>REACH Registration Support:</strong> €5-20K per substance (AI-assisted + QA)</p>
+    <p><strong>Training & Workshops:</strong> €3-8K per session for teams adopting the platform</p>
+    <p><strong>API Licensing:</strong> €500-2,000/mo for consultancies embedding the engine</p>
+  </div>
+</div>
+
+<div class="card highlight">
+  <h3>Path to €2M in 36 Months</h3>
+  <table>
+    <tr><th>Year</th><th>SaaS MRR</th><th>Project Revenue</th><th>Total Annual</th><th>Cumulative</th></tr>
+    <tr><td><strong>Year 1</strong> (REACH launch)</td><td>€8K/mo by M12</td><td>€80K</td><td>€130K</td><td>€130K</td></tr>
+    <tr><td><strong>Year 2</strong> (H2 expansion)</td><td>€35K/mo by M24</td><td>€200K</td><td>€520K</td><td>€650K</td></tr>
+    <tr><td><strong>Year 3</strong> (scale)</td><td>€80K/mo by M36</td><td>€400K</td><td>€1,360K</td><td>€2,010K</td></tr>
+  </table>
+  <p style="margin-top:.8rem"><strong>Key assumptions:</strong> 15% monthly growth in Year 1, 10% in Year 2, 8% in Year 3. Average customer churn: 3%/mo. Blended ARPU: €600/mo. First paying customer by Month 3.</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>5. Technical Architecture</h2>
+
+<div class="card" style="font-family:monospace;font-size:.8rem;line-height:1.9;background:#1a1a1a;color:#e0e0e0;border:none">
+<pre style="overflow-x:auto">
+┌─────────────────────────────────────────────────────────┐
+│                    FRONTEND (Next.js)                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │Dashboard │  │REACH     │  │H2        │  │Reports │ │
+│  │& Auth    │  │Workspace │  │Workspace │  │Builder │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
+└────────────────────────┬────────────────────────────────┘
+                         │ REST + WebSocket
+┌────────────────────────┴────────────────────────────────┐
+│                  API GATEWAY (FastAPI)                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │Auth/     │  │Substance │  │Project   │  │Billing │ │
+│  │Users     │  │Service   │  │Service   │  │Stripe  │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────┴────────────────────────────────┐
+│                    AI ENGINE (Python)                     │
+│  ┌──────────────┐  ┌────────────┐  ┌─────────────────┐ │
+│  │LLM Layer     │  │ML Models   │  │Domain Knowledge │ │
+│  │(Claude API)  │  │(QSAR, Cat.)│  │(ECHA DB, Papers)│ │
+│  └──────────────┘  └────────────┘  └─────────────────┘ │
+└────────────────────────┬────────────────────────────────┘
+                         │
+┌────────────────────────┴────────────────────────────────┐
+│                    DATA LAYER                            │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌────────┐ │
+│  │PostgreSQL│  │Redis     │  │S3/Minio  │  │Vector  │ │
+│  │(Core DB) │  │(Cache)   │  │(Files)   │  │DB(RAG) │ │
+│  └──────────┘  └──────────┘  └──────────┘  └────────┘ │
+└─────────────────────────────────────────────────────────┘
+</pre>
+</div>
+
+<div class="grid-2" style="margin-top:1.2rem">
+  <div class="card">
+    <div class="tag tag-blue">Tech Stack</div>
+    <p><span class="pill pill-blue">Next.js 14</span> <span class="pill pill-blue">TypeScript</span> <span class="pill pill-blue">Tailwind CSS</span> <span class="pill pill-blue">shadcn/ui</span></p>
+    <p><span class="pill pill-green">FastAPI</span> <span class="pill pill-green">Python 3.11+</span> <span class="pill pill-green">SQLAlchemy</span> <span class="pill pill-green">Celery</span></p>
+    <p><span class="pill pill-gold">Claude API</span> <span class="pill pill-gold">scikit-learn</span> <span class="pill pill-gold">RDKit</span> <span class="pill pill-gold">PyTorch</span></p>
+    <p><span class="pill">PostgreSQL</span> <span class="pill">Redis</span> <span class="pill">Docker</span> <span class="pill">Vercel + Railway</span></p>
+  </div>
+  <div class="card">
+    <div class="tag tag-green">Key AI Components</div>
+    <p><strong>LLM Layer (Claude):</strong> SDS text generation, regulatory interpretation, report writing, natural language queries on chemical data.</p>
+    <p><strong>QSAR Models:</strong> Quantitative Structure-Activity Relationship models for hazard prediction. Trained on ECHA's 25,000+ registered substance dataset.</p>
+    <p><strong>Catalyst ML:</strong> Graph neural networks on published catalysis data for performance prediction. RDKit for molecular representations.</p>
+    <p><strong>RAG Pipeline:</strong> Vector database of REACH guidance documents, ECHA Q&As, and EU regulations for context-aware compliance answers.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>6. Competitive Landscape</h2>
+
+<div class="card">
+  <table>
+    <tr><th>Competitor</th><th>What they do</th><th>Weakness</th><th>Our advantage</th></tr>
+    <tr><td><strong>IUCLID</strong> (ECHA)</td><td>Free dossier tool</td><td>Painfully complex UI, no AI, no automation</td><td>We pre-fill what IUCLID can't — AI does 80% of the work</td></tr>
+    <tr><td><strong>Chesar</strong> (ECHA)</td><td>Exposure assessment tool</td><td>Manual, requires expertise</td><td>AI-automated exposure scenarios from chemical properties</td></tr>
+    <tr><td><strong>Sphera / Lisam</strong></td><td>EHS/SDS management</td><td>Enterprise-only, €50K+/yr, legacy UX</td><td>SME-accessible pricing, modern UX, AI-first</td></tr>
+    <tr><td><strong>Chemical Watch</strong></td><td>Regulatory intelligence</td><td>Content only, no tools</td><td>Intelligence + action (generate SDS, dossiers, reports)</td></tr>
+    <tr><td><strong>No H2 competitor</strong></td><td>—</td><td>—</td><td>First mover in AI-powered hydrogen catalyst intelligence</td></tr>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>7. Roadmap — 36 Months</h2>
+
+<div class="phase phase-active">
+  <div class="tag tag-gold">Phase 1 — Foundation (Months 1-4)</div>
+  <h3>Build MVP: REACH Engine Core</h3>
+  <p><strong>M1:</strong> Set up infrastructure. Build substance input workflow (CAS number, SMILES, properties). Connect to ECHA database APIs. Set up Claude API integration for text generation.</p>
+  <p><strong>M2:</strong> CLP hazard classification engine (QSAR predictions). Safety Data Sheet generator (16-section Annex II format). User auth, dashboard, Stripe billing.</p>
+  <p><strong>M3:</strong> Beta launch with 3-5 pilot customers (from your network). Iterate based on feedback. Regulatory alert system (SVHC watchlist).</p>
+  <p><strong>M4:</strong> Public launch. First paying customers. Landing page, content marketing launch.</p>
+  <p><strong>Target:</strong> 10 paying customers, €3K MRR</p>
+</div>
+
+<div class="phase">
+  <div class="tag tag-gold">Phase 2 — Growth (Months 5-10)</div>
+  <h3>Full REACH Module + Revenue Engine</h3>
+  <p><strong>M5-6:</strong> IUCLID dossier export. Exposure scenario generator. Read-across suggestion engine. Multi-language SDS (24 EU languages).</p>
+  <p><strong>M7-8:</strong> Consultant/reseller program launch. API for third-party integrations. Advanced reporting and analytics dashboard.</p>
+  <p><strong>M9-10:</strong> Enterprise features (SSO, team management, audit logs). Partnership with 2-3 REACH consultancies for distribution.</p>
+  <p><strong>Target:</strong> 50 paying customers, €15K MRR, first consultant partners</p>
+</div>
+
+<div class="phase">
+  <div class="tag tag-blue">Phase 3 — H2 Module Launch (Months 11-18)</div>
+  <h3>Add Hydrogen Intelligence</h3>
+  <p><strong>M11-13:</strong> Catalyst selection engine MVP. Performance prediction models trained on literature data. Techno-economic calculator.</p>
+  <p><strong>M14-16:</strong> EU funding navigator. Due diligence report generator. Investor dashboard for portfolio hydrogen projects.</p>
+  <p><strong>M17-18:</strong> Cross-sell to existing REACH customers. Partnerships with hydrogen associations and accelerators.</p>
+  <p><strong>Target:</strong> 120 total customers, €35K MRR, 5 H2 project reports sold</p>
+</div>
+
+<div class="phase">
+  <div class="tag tag-green">Phase 4 — Scale (Months 19-36)</div>
+  <h3>Platform Expansion</h3>
+  <p><strong>M19-24:</strong> Industry-specific modules (cosmetics, pharma intermediates). White-label API for large consultancies. Mobile app for field inspections.</p>
+  <p><strong>M25-30:</strong> Expand to UK REACH, K-REACH (Korea), TSCA (US). Multilingual platform. Channel partnerships with EHS software vendors.</p>
+  <p><strong>M31-36:</strong> Series A readiness. Marketplace for third-party chemical data providers. Advanced analytics and benchmarking across industries.</p>
+  <p><strong>Target:</strong> 300+ customers, €80K MRR, €2M cumulative revenue</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>8. Unfair Advantages</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <h3>Why this team wins</h3>
+    <p><strong>PhD in Catalysis</strong> — not a software company guessing at chemistry. Deep understanding of reaction mechanisms, catalyst behavior, and thermodynamics.</p>
+    <p><strong>Full-stack builder</strong> — can ship v1 alone. No need for a technical co-founder to get started. React, Python, AI integration.</p>
+    <p><strong>EU institutional network</strong> — direct relationships with EIF, CEB, European Commission. First customers and distribution through REDI network.</p>
+    <p><strong>REDI proof point</strong> — built a €15M fund across 8 countries. Demonstrates ability to navigate EU regulatory and financial complexity.</p>
+  </div>
+  <div class="card">
+    <h3>Defensibility over time</h3>
+    <p><strong>Proprietary data moat:</strong> Every customer interaction improves the AI models. Classification accuracy, SDS quality, and catalyst predictions get better with each use. Competitors would need years to catch up.</p>
+    <p><strong>Regulatory complexity is a feature:</strong> REACH is deliberately complex. Only domain experts can build tools that actually work. Generic AI wrappers fail on the nuances (read-across criteria, weight of evidence, analog justification).</p>
+    <p><strong>Network effects:</strong> Supply chain communication features mean companies benefit when their suppliers also use the platform. Built-in viral growth within chemical supply chains.</p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>9. Go-to-Market: First 90 Days</h2>
+
+<div class="card">
+  <h3>Week 1-2: Build & Seed</h3>
+  <p>Deploy landing page. Set up waitlist. Write "origin story" LinkedIn post (PhD chemist building AI for chemical compliance). Begin MVP development sprint.</p>
+
+  <h3>Week 3-4: Validate</h3>
+  <p>Reach out to 20 chemical SMEs in Belgium/Netherlands (your geography). Offer free beta in exchange for feedback and case study rights. Target: 5 committed beta users.</p>
+
+  <h3>Month 2: Build in Public</h3>
+  <p>Weekly LinkedIn posts showing what you're building (screenshots, architecture decisions, chemical AI challenges). Attend ECHA webinars and industry events. Begin SDS generator as the wedge product (fastest to deliver value).</p>
+
+  <h3>Month 3: Launch</h3>
+  <p>Beta launch to initial users. Collect testimonials. Announce publicly on LinkedIn. Apply to relevant accelerators (EIT RawMaterials, EIC Accelerator, InnovFin). First paying customer target.</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================ -->
+<h2>10. Funding Strategy</h2>
+
+<div class="card">
+  <h3>Option A: Bootstrap to €500K ARR, then raise</h3>
+  <p>Build MVP yourself (€0 dev cost). Use BelgaLabs revenue to fund first 6-12 months. Reach €500K ARR → raise Series A at €5-8M valuation. <strong>Recommended — you keep more equity and prove market demand first.</strong></p>
+
+  <h3>Option B: EU grants as non-dilutive funding</h3>
+  <p>Apply for: <strong>EIC Accelerator</strong> (up to €2.5M grant + €15M equity), <strong>Horizon Europe</strong> (cluster 4 — digital/industry), <strong>Digital Europe Programme</strong>, <strong>InvestEU / EIF guarantees</strong>. Your REDI track record and chemistry PhD make you a strong candidate. Timeline: 6-12 months from application to funding.</p>
+
+  <h3>Option C: Pre-seed from impact/climate VCs</h3>
+  <p>€200-500K pre-seed from funds focused on climate tech or industrial AI. Relevant funds: <strong>Pale Blue Dot</strong>, <strong>World Fund</strong>, <strong>Extantia</strong>, <strong>Climate-KIC</strong>, <strong>Contrarian Ventures</strong>. Your Three Worlds story + chemistry expertise + REDI track record = compelling founder narrative.</p>
+</div>
+
+<div class="divider"></div>
+
+<div style="text-align:center;padding:2rem;color:var(--text3);font-size:.85rem">
+  <p><strong>Three Worlds Chemical Intelligence Platform</strong></p>
+  <p>Science. Capital. Community.</p>
+  <p style="font-size:.75rem;margin-top:1rem">Document version 1.0 — March 2026 — Confidential</p>
+</div>
+
+</div>
+</body>
+</html>
