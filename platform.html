@@ -330,10 +330,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-
 <section class="cta" id="cta">
   <h2>Get early access</h2>
   <p>We're onboarding the first cohort of beta users. Join the waitlist.</p>
-  <div class="cta-form">
-    <input type="email" class="cta-input" placeholder="you@company.com" id="email-input">
-    <button class="btn-primary" onclick="handleSignup()">Request Access</button>
+  <div class="cta-form" id="cta-form">
+    <input type="email" class="cta-input" placeholder="you@company.com" id="email-input" required>
+    <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Request Access</button>
   </div>
+  <div id="signup-success" style="display:none"><p style="color:var(--gold);font-weight:700;font-size:1.1rem">You're on the list! We'll reach out when your spot is ready.</p></div>
+  <div id="signup-error" style="display:none"><p style="color:#ef4444;font-weight:600;font-size:.9rem" id="signup-error-msg"></p></div>
   <p style="font-size:.75rem;color:var(--text3);margin-top:1rem">No spam. We'll reach out when your spot is ready.</p>
 </section>
 
@@ -366,13 +368,43 @@ function switchTab(t){
 const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}})},{threshold:.15,rootMargin:'0px 0px -50px 0px'});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 
-// Signup handler
-function handleSignup(){
-  const email=document.getElementById('email-input').value;
-  if(!email||!email.includes('@')){alert('Please enter a valid email');return}
-  // In production: send to backend/Mailchimp/etc
-  document.querySelector('.cta-form').innerHTML='<p style="color:var(--gold);font-weight:700;font-size:1.1rem">You\'re on the list! We\'ll be in touch soon.</p>';
+// Kit (ConvertKit) integration
+const KIT_API_KEY='N-LgaMpJAsmC6vhFy1AXUw';
+const KIT_TAG_WAITLIST=17236643;
+
+async function handleSignup(){
+  const emailEl=document.getElementById('email-input');
+  const btn=document.getElementById('signup-btn');
+  const email=emailEl.value.trim();
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showError('Please enter a valid email address.');return;
+  }
+  btn.textContent='Joining...';btn.disabled=true;
+  try{
+    const res=await fetch(`https://api.convertkit.com/v3/tags/${KIT_TAG_WAITLIST}/subscribe`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({api_key:KIT_API_KEY,email:email})
+    });
+    if(!res.ok) throw new Error('Network error');
+    const data=await res.json();
+    if(data.subscription){
+      document.getElementById('cta-form').style.display='none';
+      document.getElementById('signup-success').style.display='block';
+      document.getElementById('signup-error').style.display='none';
+    }else{
+      throw new Error('Unexpected response');
+    }
+  }catch(err){
+    showError('Something went wrong. Please try again or email office@redi-ngo.eu directly.');
+    btn.textContent='Request Access';btn.disabled=false;
+  }
 }
+function showError(msg){
+  document.getElementById('signup-error').style.display='block';
+  document.getElementById('signup-error-msg').textContent=msg;
+}
+document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')handleSignup()});
 </script>
 </body>
 </html>
