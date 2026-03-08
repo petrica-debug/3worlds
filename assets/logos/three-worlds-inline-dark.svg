@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="90" viewBox="0 0 300 90">
+  <defs>
+    <radialGradient id="goldGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8d06a"/><stop offset="100%" stop-color="#a07c15"/></radialGradient>
+    <radialGradient id="blueGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient>
+    <radialGradient id="greenGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#047857"/></radialGradient>
+  </defs>
+  <circle cx="70" cy="40" r="18" fill="url(#goldGrad)"/>
+  <circle cx="67" cy="34" r="5" fill="rgba(255,255,255,.2)"/>
+  <circle cx="110" cy="44" r="11" fill="url(#blueGrad)"/>
+  <circle cx="108" cy="40" r="3" fill="rgba(255,255,255,.2)"/>
+  <circle cx="138" cy="47" r="7" fill="url(#greenGrad)"/>
+  <circle cx="136.5" cy="44.5" r="2" fill="rgba(255,255,255,.15)"/>
+  <text x="175" y="39" font-family="Inter, sans-serif" font-weight="800" font-size="16" fill="#f0f0f0">Three</text>
+  <text x="175" y="55" font-family="Inter, sans-serif" font-weight="300" font-size="16" fill="#f0f0f0">Worlds</text>
+  <text x="175" y="72" font-family="Inter, sans-serif" font-weight="400" font-size="7.5" letter-spacing="3" fill="#888">PETRICA DULGHERU</text>
+</svg>

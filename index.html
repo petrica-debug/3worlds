@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three Worlds — Science. Capital. Community. | Petrica Dulgheru</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='35' cy='45' r='22' fill='%23b8941f'/><circle cx='65' cy='38' r='13' fill='%232563eb'/><circle cx='78' cy='58' r='9' fill='%23059669'/></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap');
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f6f4ef;--bg2:#edebe5;--bg3:#e4e1da;
+  --card:#fff;--card2:#faf9f6;
+  --text:#1a1a1a;--text2:#555;--text3:#888;
+  --gold:#b8941f;--gold-light:#d4b84a;--gold-dim:rgba(184,148,31,.12);--gold-glow:rgba(184,148,31,.06);
+  --blue:#2563eb;--blue-light:#dbeafe;--blue-dim:rgba(37,99,235,.08);
+  --green:#059669;--green-light:#d1fae5;--green-dim:rgba(5,150,105,.08);
+  --orange:#d97706;--orange-light:#fef3c7;--orange-dim:rgba(217,119,6,.08);
+  --border:#ddd9d0;--border2:#ccc8be;
+  --shadow:0 2px 8px rgba(0,0,0,.04),0 4px 16px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.07),0 20px 50px rgba(0,0,0,.06);
+  --radius:16px;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth;font-size:16px;overflow-x:hidden}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+/* === GRAIN TEXTURE === */
+.grain{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* === SCROLL PROGRESS === */
+.scroll-progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));z-index:1000;width:0%;transition:width .1s linear;border-radius:0 2px 2px 0}
+
+/* === LOADER === */
+.loader{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;transition:opacity .8s var(--ease),visibility .8s}
+.loader.hidden{opacity:0;visibility:hidden;pointer-events:none}
+.loader-orbit{width:60px;height:60px;position:relative;animation:loaderSpin 2s linear infinite}
+@keyframes loaderSpin{to{transform:rotate(360deg)}}
+.loader-orbit .lo-planet{width:14px;height:14px;border-radius:50%;position:absolute}
+.loader-orbit .lo-planet:nth-child(1){background:var(--gold);top:0;left:50%;transform:translateX(-50%)}
+.loader-orbit .lo-planet:nth-child(2){background:var(--blue);bottom:8px;left:4px;width:10px;height:10px}
+.loader-orbit .lo-planet:nth-child(3){background:var(--green);bottom:8px;right:4px;width:8px;height:8px}
+.loader-text{font-size:.65rem;letter-spacing:5px;text-transform:uppercase;color:var(--text3)}
+
+/* === SCROLL ANIMATIONS === */
+.reveal{opacity:0;transform:translateY(50px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-50px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(50px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+.s1{transition-delay:.1s}.s2{transition-delay:.2s}.s3{transition-delay:.3s}
+.s4{transition-delay:.4s}.s5{transition-delay:.5s}.s6{transition-delay:.6s}
+.s7{transition-delay:.7s}.s8{transition-delay:.8s}
+
+/* === IMPROVED PLANETS === */
+.planet{border-radius:50%;position:relative;overflow:hidden}
+.planet::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.5) 0%,rgba(255,255,255,.1) 30%,transparent 60%);z-index:3}
+/* atmospheric halo */
+.planet::after{content:'';position:absolute;inset:-12%;border-radius:50%;background:radial-gradient(circle,transparent 40%,var(--planet-glow,rgba(184,148,31,.06)) 55%,transparent 70%);z-index:0;animation:haloBreath 4s ease-in-out infinite}
+@keyframes haloBreath{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.04)}}
+
+/* animated surface bands */
+.planet-surface{position:absolute;inset:0;border-radius:50%;overflow:hidden;z-index:1}
+.planet-surface::before{
+  content:'';position:absolute;top:0;left:-100%;width:300%;height:100%;
+  background:repeating-linear-gradient(0deg,
+    transparent 0%,rgba(255,255,255,.08) 8%,transparent 16%,
+    rgba(0,0,0,.06) 24%,transparent 32%,rgba(255,255,255,.05) 40%,
+    transparent 48%,rgba(0,0,0,.04) 56%,transparent 64%,
+    rgba(255,255,255,.06) 72%,transparent 80%,rgba(0,0,0,.05) 88%,transparent 100%);
+  animation:surfaceSpin var(--surface-speed,25s) linear infinite;
+}
+@keyframes surfaceSpin{to{transform:translateX(33.33%)}}
+/* shadow on planet */
+.planet-shadow{position:absolute;inset:0;border-radius:50%;z-index:2;background:linear-gradient(105deg,transparent 40%,rgba(0,0,0,.2) 70%,rgba(0,0,0,.35) 100%)}
+
+.planet-gold{background:linear-gradient(135deg,#c9a227,#e8d06a 30%,#b8941f 50%,#d4b84a 70%,#a07c15);--planet-glow:rgba(184,148,31,.15);box-shadow:0 0 40px rgba(184,148,31,.12)}
+.planet-blue{background:linear-gradient(135deg,#2563eb,#60a5fa 25%,#1d4ed8 50%,#93c5fd 75%,#2563eb);--planet-glow:rgba(37,99,235,.12);box-shadow:0 0 40px rgba(37,99,235,.1)}
+.planet-green{background:linear-gradient(135deg,#059669,#34d399 25%,#047857 50%,#6ee7b7 70%,#059669);--planet-glow:rgba(5,150,105,.12);box-shadow:0 0 40px rgba(5,150,105,.1)}
+
+/* tiny moons */
+.moon{position:absolute;border-radius:50%;z-index:4}
+.moon::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.5),transparent 60%)}
+
+.orbit-ring{border-radius:50%;border:1px solid var(--border);position:absolute;animation:orbitSpin var(--orbit-speed,40s) linear infinite}
+.orbit-ring.dashed{border:1px dashed var(--border)}
+@keyframes orbitSpin{to{transform:rotate(360deg)}}
+.orbit-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);position:absolute;top:-3px;left:50%;box-shadow:0 0 8px var(--gold-dim)}
+
+/* === NAV === */
+nav{position:fixed;top:3px;left:0;right:0;z-index:100;padding:0 3rem;transition:all .5s var(--ease)}
+nav.scrolled{top:3px;background:rgba(246,244,239,.92);backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(0,0,0,.04)}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
+.nav-logo{font-weight:800;font-size:1.15rem;letter-spacing:-.5px;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:.6rem}
+.nav-logo span{color:var(--gold);font-weight:300}
+.nav-logo-mark{flex-shrink:0}
+.nav-links{display:flex;gap:2.5rem;list-style:none}
+.nav-links a{color:var(--text3);text-decoration:none;font-size:.78rem;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;transition:color .4s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--gold);border-radius:2px;transition:width .4s var(--ease)}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{width:100%}
+.nav-links a.active{color:var(--text)}
+.nav-links a.active::after{width:100%}
+.nav-cta{background:var(--text);color:var(--bg);border:none;padding:.55rem 1.6rem;border-radius:100px;font-weight:600;font-size:.8rem;cursor:pointer;text-decoration:none;transition:all .4s var(--ease)}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+
+/* === HERO === */
+.hero{min-height:100vh;display:flex;align-items:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden}
+.hero-canvas{position:absolute;inset:0;z-index:0;pointer-events:none}
+.hero-inner{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1.1fr .9fr;gap:4rem;align-items:center;width:100%;position:relative;z-index:1}
+.hero-text{position:relative;z-index:2}
+.hero-tag{display:inline-flex;align-items:center;gap:.6rem;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--gold);margin-bottom:2rem;opacity:0;animation:fadeUp .8s var(--ease) .8s forwards;transform:translateY(15px)}
+.hero-tag-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,5.5vw,4.5rem);font-weight:800;line-height:1.08;letter-spacing:-2px;margin-bottom:1.8rem}
+.hero h1 .word{display:inline-block;opacity:0;transform:translateY(25px) rotateX(-8deg);animation:wordReveal .7s var(--ease) forwards}
+@keyframes wordReveal{to{opacity:1;transform:translateY(0) rotateX(0)}}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero h1 br+.word{/* newline handled by br */}
+
+.hero-subtitle{font-size:1.1rem;color:var(--text2);max-width:500px;line-height:1.85;margin-bottom:1.5rem;opacity:0;animation:fadeUp 1s var(--ease) 1.8s forwards;transform:translateY(20px)}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+
+/* "Currently" status bar */
+.hero-status{display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:2.5rem;opacity:0;animation:fadeUp .8s var(--ease) 2s forwards;transform:translateY(15px)}
+.status-item{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text3)}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-dot.live{animation:pulse 2s ease-in-out infinite}
+
+.hero-cta-row{display:flex;gap:1rem;opacity:0;animation:fadeUp .8s var(--ease) 2.2s forwards;transform:translateY(15px)}
+.magnetic-btn{transition:transform .3s var(--ease-out)}
+.btn-primary{background:var(--text);color:var(--bg);padding:.85rem 2.2rem;border-radius:100px;font-weight:700;font-size:.9rem;cursor:pointer;text-decoration:none;border:none;transition:all .4s var(--ease);position:relative;overflow:hidden;display:inline-block}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);transform:translateX(-100%);transition:transform .6s}
+.btn-primary:hover::before{transform:translateX(100%)}
+.btn-primary:hover{box-shadow:var(--shadow-lg)}
+.btn-outline{background:transparent;color:var(--text);padding:.85rem 2.2rem;border-radius:100px;font-weight:600;font-size:.9rem;cursor:pointer;text-decoration:none;border:1.5px solid var(--border2);transition:all .4s var(--ease);display:inline-block}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+
+/* hero planets */
+.hero-planets{position:relative;width:100%;aspect-ratio:1;max-width:480px;margin:0 auto;opacity:0;animation:fadeUp 1.2s var(--ease) 1.6s forwards;transform:translateY(30px)}
+.hero-planet-main{width:52%;height:52%;position:absolute;top:24%;left:24%;z-index:3;animation:floatMain 7s ease-in-out infinite}
+@keyframes floatMain{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.hero-planet-sm1{width:13%;height:13%;position:absolute;top:7%;right:16%;z-index:2;animation:floatSm 5s ease-in-out infinite}
+.hero-planet-sm2{width:9%;height:9%;position:absolute;bottom:20%;left:9%;z-index:2;animation:floatSm 8s ease-in-out infinite reverse}
+@keyframes floatSm{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* hero orbits */
+.hero-orbit-1{width:82%;height:82%;top:9%;left:9%;--orbit-speed:55s;opacity:.4}
+.hero-orbit-2{width:100%;height:100%;top:0;left:0;--orbit-speed:80s;opacity:.25}
+.hero-orbit-2.dashed{border-style:dashed}
+/* hero moons */
+.hero-moon-1{width:8px;height:8px;background:#d4b84a;top:18%;right:22%;animation:floatSm 4s ease-in-out infinite;opacity:.5}
+.hero-moon-2{width:5px;height:5px;background:#93c5fd;bottom:28%;right:28%;animation:floatSm 6s ease-in-out infinite reverse;opacity:.4}
+
+/* scroll cue */
+.scroll-cue{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;opacity:0;animation:fadeUp .8s var(--ease) 2.5s forwards}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--text3),transparent);animation:scrollLine 2s ease-in-out infinite}
+@keyframes scrollLine{0%{opacity:1;height:40px}100%{opacity:0;height:20px}}
+.scroll-label{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:var(--text3)}
+
+/* === SECTIONS === */
+section{padding:7rem 2rem;position:relative}
+.container{max-width:1100px;margin:0 auto}
+.section-tag{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:4px;color:var(--gold);margin-bottom:1rem;display:block}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,4.5vw,3.2rem);font-weight:800;margin-bottom:1rem;line-height:1.1;letter-spacing:-1px}
+.section-desc{color:var(--text2);font-size:1.05rem;max-width:550px;margin-bottom:3.5rem}
+
+/* === ABOUT === */
+.about-section{background:var(--card)}
+.about-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:4rem;align-items:start}
+.about-text p{color:var(--text2);margin-bottom:1.5rem;font-size:1rem}
+.about-text strong{color:var(--text);font-weight:600}
+.about-badges{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:2rem}
+.badge{display:inline-flex;align-items:center;gap:.5rem;font-size:.78rem;font-weight:600;padding:.5rem 1rem;border-radius:100px;border:1.5px solid var(--border);background:var(--bg);transition:all .4s var(--ease)}
+.badge:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:var(--shadow)}
+.badge-dot{width:8px;height:8px;border-radius:50%}
+
+.about-cards{display:grid;gap:.8rem}
+.about-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.4rem;transition:all .5s var(--ease);position:relative;overflow:hidden}
+.about-card::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--card-accent,var(--gold));transform:scaleY(0);transform-origin:top;transition:transform .5s var(--ease)}
+.about-card:hover::before{transform:scaleY(1)}
+.about-card:hover{transform:translateX(6px);border-color:var(--border2);box-shadow:var(--shadow)}
+.about-card h4{font-size:.88rem;font-weight:700;margin-bottom:.25rem}
+.about-card p{font-size:.8rem;color:var(--text2);line-height:1.5}
+
+/* === THREE WORLDS === */
+.worlds-section{overflow:hidden}
+.worlds-intro{text-align:center;margin-bottom:4rem}
+.worlds-intro .section-tag,.worlds-intro .section-title,.worlds-intro .section-desc{text-align:center;margin-left:auto;margin-right:auto}
+
+.world-row{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-bottom:6rem}
+.world-row:last-child{margin-bottom:0}
+.world-row.reverse{direction:rtl}
+.world-row.reverse>*{direction:ltr}
+
+.world-content{padding:1rem 0}
+.world-num{font-size:.7rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:.8rem}
+.world-num .num-circle{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:.7rem;font-weight:800;margin-right:.5rem;color:#fff}
+.world-content h3{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:800;margin-bottom:1rem;letter-spacing:-.5px}
+.world-content p{font-size:.95rem;color:var(--text2);line-height:1.8;margin-bottom:1.2rem}
+.world-tags{display:flex;flex-wrap:wrap;gap:.4rem}
+.world-tag{font-size:.68rem;font-weight:600;padding:.3rem .75rem;border-radius:100px;transition:all .3s var(--ease)}
+.world-tag:hover{transform:translateY(-2px)}
+
+.world-planet-wrap{position:relative;width:100%;aspect-ratio:1;max-width:380px;margin:0 auto;display:flex;align-items:center;justify-content:center}
+.world-planet{width:60%;height:60%;z-index:2;animation:floatMain 7s ease-in-out infinite}
+.world-orbit{width:85%;height:85%;position:absolute;top:7.5%;left:7.5%}
+.world-orbit .orbit-dot{width:8px;height:8px;top:-4px}
+.world-orbit-2{width:98%;height:98%;position:absolute;top:1%;left:1%;opacity:.3}
+
+.w-gold .num-circle{background:var(--gold)}
+.w-gold .world-tag{color:var(--gold);background:var(--gold-dim);border:1px solid var(--gold-dim)}
+.w-blue .num-circle{background:var(--blue)}
+.w-blue .world-tag{color:var(--blue);background:var(--blue-dim);border:1px solid var(--blue-dim)}
+.w-green .num-circle{background:var(--green)}
+.w-green .world-tag{color:var(--green);background:var(--green-dim);border:1px solid var(--green-dim)}
+
+/* === IMPACT === */
+.impact-section{background:var(--card)}
+.impact-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.impact-card{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius);padding:2.2rem 1.2rem;text-align:center;transition:all .5s var(--ease);position:relative;overflow:hidden}
+.impact-card::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:2px;background:var(--gold);transition:width .5s var(--ease)}
+.impact-card:hover::after{width:50%}
+.impact-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.impact-num{font-size:2.6rem;font-weight:900;color:var(--gold);margin-bottom:.4rem;font-variant-numeric:tabular-nums}
+.impact-label{font-size:.76rem;color:var(--text3);line-height:1.5}
+
+/* === QUOTE === */
+.quote-section{text-align:center;padding:8rem 2rem;position:relative;overflow:hidden;background:var(--bg)}
+.quote-orbits{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;pointer-events:none}
+.quote-orbit{position:absolute;border-radius:50%;border:1px solid var(--border);opacity:.3}
+.quote-orbit-1{inset:0;animation:orbitSpin 60s linear infinite}
+.quote-orbit-2{inset:15%;animation:orbitSpin 45s linear infinite reverse;border-style:dashed}
+.quote-orbit-3{inset:30%;animation:orbitSpin 30s linear infinite}
+.quote-planet-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;opacity:.12}
+.quote-mark{font-family:'Playfair Display',serif;font-size:7rem;color:var(--gold);opacity:.18;line-height:1;margin-bottom:-1.5rem;position:relative;z-index:1}
+.quote-section blockquote{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,3vw,2rem);font-style:italic;max-width:700px;margin:0 auto;line-height:1.65;position:relative;z-index:1}
+.quote-attr{margin-top:1.5rem;font-family:'Inter',sans-serif;font-style:normal;font-size:.85rem;color:var(--text3);position:relative;z-index:1}
+
+/* === SERVICES === */
+.services-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}
+.svc-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);padding:2.5rem;transition:all .5s var(--ease);position:relative;overflow:hidden}
+.svc-card::before{content:'';position:absolute;inset:-1px;border-radius:var(--radius);background:conic-gradient(from var(--angle,0deg),transparent 0%,var(--svc-accent,var(--gold)) 10%,transparent 20%);opacity:0;transition:opacity .5s;z-index:0;padding:1.5px;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.svc-card:hover::before{opacity:1}
+.svc-card:hover{transform:translateY(-5px);box-shadow:var(--shadow-lg)}
+.svc-card>*{position:relative;z-index:1}
+.svc-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:1.4rem;transition:transform .4s var(--ease)}
+.svc-card:hover .svc-icon{transform:scale(1.1) rotate(-5deg)}
+.svc-card h3{font-size:1.1rem;font-weight:700;margin-bottom:.6rem}
+.svc-card p{font-size:.88rem;color:var(--text2);line-height:1.7;margin-bottom:1rem}
+.svc-for{font-size:.7rem;color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+
+/* === LOGO MARQUEE === */
+.marquee-section{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--card);overflow:hidden;padding:2rem 0}
+.marquee-label{text-align:center;margin-bottom:1.2rem}
+.marquee-wrap{overflow:hidden;position:relative}
+.marquee-wrap::before,.marquee-wrap::after{content:'';position:absolute;top:0;bottom:0;width:80px;z-index:2}
+.marquee-wrap::before{left:0;background:linear-gradient(90deg,var(--card),transparent)}
+.marquee-wrap::after{right:0;background:linear-gradient(270deg,var(--card),transparent)}
+.marquee-track{display:flex;gap:1.5rem;animation:marquee 40s linear infinite;width:max-content}
+@keyframes marquee{to{transform:translateX(-50%)}}
+.logo-pill{font-size:.8rem;font-weight:600;color:var(--text3);padding:.6rem 1.4rem;border:1.5px solid var(--border);border-radius:100px;white-space:nowrap;transition:all .4s var(--ease);flex-shrink:0}
+.logo-pill:hover{color:var(--text);border-color:var(--gold);background:var(--gold-glow)}
+
+/* === TIMELINE === */
+.journey-section{background:var(--card)}
+.timeline{position:relative;padding-left:3rem;max-width:700px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,var(--border2) 5%,var(--border2) 95%,transparent)}
+.tl-item{position:relative;margin-bottom:2.5rem;padding-left:2.5rem}
+.tl-item::before{content:'';position:absolute;left:-3rem;top:.5rem;width:17px;height:17px;border-radius:50%;background:var(--card);border:2.5px solid var(--gold);transition:all .4s var(--ease);box-shadow:0 0 0 5px var(--card)}
+.tl-item:hover::before{background:var(--gold);box-shadow:0 0 0 5px var(--card),0 0 20px var(--gold-dim)}
+.tl-year{font-size:.7rem;font-weight:700;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:.3rem}
+.tl-item h4{font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
+.tl-item p{font-size:.85rem;color:var(--text2);line-height:1.65}
+
+/* === CTA === */
+.cta-section{text-align:center;padding:9rem 2rem;position:relative;overflow:hidden;background:var(--bg)}
+.cta-canvas{position:absolute;inset:0;z-index:0;pointer-events:none}
+.cta-planets{position:absolute;inset:0;pointer-events:none;z-index:0}
+.cta-p1{position:absolute;width:80px;height:80px;top:15%;left:10%;animation:floatSm 8s ease-in-out infinite;opacity:.15}
+.cta-p2{position:absolute;width:50px;height:50px;bottom:20%;right:12%;animation:floatSm 6s ease-in-out infinite reverse;opacity:.2}
+.cta-p3{position:absolute;width:30px;height:30px;top:30%;right:25%;animation:floatMain 10s ease-in-out infinite;opacity:.1}
+.cta-section h2{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,5vw,3.8rem);font-weight:800;letter-spacing:-1px;margin-bottom:1rem;position:relative;z-index:1}
+.cta-section p{color:var(--text2);margin-bottom:2.5rem;font-size:1.05rem;position:relative;z-index:1}
+.cta-buttons{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;position:relative;z-index:1}
+
+/* === FOOTER === */
+footer{border-top:1px solid var(--border);padding:2.5rem 2rem;max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}
+footer p{font-size:.78rem;color:var(--text3)}
+footer a{color:var(--gold);text-decoration:none;transition:opacity .3s}
+footer a:hover{opacity:.7}
+.footer-links{display:flex;gap:1.5rem}
+.footer-links a{color:var(--text3);font-size:.78rem;transition:color .3s}
+.footer-links a:hover{color:var(--gold)}
+
+/* === PLATFORM SECTION === */
+.platform-section{background:var(--text);color:var(--bg);overflow:hidden;position:relative}
+.platform-section::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 20% 50%,rgba(184,148,31,.08),transparent 50%),radial-gradient(ellipse at 80% 50%,rgba(37,99,235,.06),transparent 50%);pointer-events:none}
+.platform-section .section-tag{color:var(--gold-light)}
+.platform-section .section-title{color:var(--bg)}
+.platform-section .section-desc{color:rgba(246,244,239,.6)}
+.platform-grid{display:grid;grid-template-columns:1fr 1fr;gap:3.5rem;align-items:center}
+.platform-text{position:relative;z-index:1}
+.platform-label{display:inline-flex;align-items:center;gap:.5rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:1.5rem;padding:.4rem 1rem;border:1px solid rgba(184,148,31,.2);border-radius:100px;background:rgba(184,148,31,.06)}
+.platform-text h3{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:800;letter-spacing:-1px;line-height:1.15;margin-bottom:1.2rem;color:var(--bg)}
+.platform-text h3 em{font-style:italic;color:var(--gold)}
+.platform-text p{color:rgba(246,244,239,.65);font-size:.95rem;line-height:1.85;margin-bottom:1.2rem}
+.platform-modules{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:2rem 0}
+.platform-module{padding:1.2rem;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:all .4s var(--ease)}
+.platform-module:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);transform:translateY(-3px)}
+.platform-module h4{font-size:.85rem;font-weight:700;color:var(--bg);margin-bottom:.3rem;display:flex;align-items:center;gap:.4rem}
+.platform-module p{font-size:.78rem;color:rgba(246,244,239,.5);margin:0;line-height:1.5}
+.platform-module-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.platform-cta-row{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:#000;padding:.75rem 1.8rem;border-radius:100px;font-weight:700;font-size:.85rem;text-decoration:none;transition:all .4s var(--ease);display:inline-block}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 8px 30px rgba(184,148,31,.25)}
+.btn-ghost{color:rgba(246,244,239,.7);padding:.75rem 1.8rem;border-radius:100px;font-weight:600;font-size:.85rem;text-decoration:none;border:1.5px solid rgba(255,255,255,.15);transition:all .4s var(--ease);display:inline-block}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+
+.platform-visual{position:relative;z-index:1;display:flex;align-items:center;justify-content:center}
+.platform-mockup{width:100%;max-width:420px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:1.5rem;backdrop-filter:blur(10px)}
+.mockup-bar{display:flex;gap:.4rem;margin-bottom:1.2rem}
+.mockup-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15)}
+.mockup-dot:first-child{background:#ef4444}
+.mockup-dot:nth-child(2){background:#eab308}
+.mockup-dot:nth-child(3){background:#22c55e}
+.mockup-row{display:flex;gap:.8rem;margin-bottom:.8rem;align-items:center}
+.mockup-label{font-size:.7rem;color:rgba(246,244,239,.4);width:70px;flex-shrink:0}
+.mockup-value{flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;position:relative}
+.mockup-fill{height:100%;border-radius:4px;animation:mockupFill 2s var(--ease) forwards;width:0}
+@keyframes mockupFill{to{width:var(--fill)}}
+.mockup-badge{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;font-weight:600;padding:.3rem .7rem;border-radius:100px;margin-top:.8rem}
+.mockup-badge-gold{color:var(--gold);border:1px solid rgba(184,148,31,.25);background:rgba(184,148,31,.08)}
+.mockup-badge-blue{color:var(--blue);border:1px solid rgba(37,99,235,.25);background:rgba(37,99,235,.08)}
+
+/* === RESPONSIVE === */
+@media(max-width:1024px){
+  .hero-inner{grid-template-columns:1fr;text-align:center}
+  .hero-subtitle{margin-left:auto;margin-right:auto}
+  .hero-status{justify-content:center}
+  .hero-cta-row{justify-content:center}
+  .hero-planets{max-width:350px;margin-top:2rem}
+  .world-row,.world-row.reverse{grid-template-columns:1fr;text-align:center}
+  .world-planet-wrap{max-width:280px}
+  .about-badges{justify-content:center}
+  .impact-grid{grid-template-columns:repeat(2,1fr)}
+  .platform-grid{grid-template-columns:1fr;text-align:center}
+  .platform-modules{max-width:400px;margin-left:auto;margin-right:auto}
+  .platform-cta-row{justify-content:center}
+  .platform-visual{margin-top:2rem}
+  .platform-mockup{margin:0 auto}
+}
+@media(max-width:768px){
+  .about-grid{grid-template-columns:1fr}
+  .services-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+  nav{padding:0 1.5rem}
+  section{padding:5rem 1.5rem}
+  footer{flex-direction:column;gap:1rem;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- GRAIN -->
+<div class="grain"></div>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="loader-orbit">
+    <div class="lo-planet"></div>
+    <div class="lo-planet"></div>
+    <div class="lo-planet"></div>
+  </div>
+  <div class="loader-text">Loading worlds</div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo"><svg class="nav-logo-mark" width="38" height="20" viewBox="0 0 38 20"><circle cx="10" cy="10" r="8" fill="url(#navGold)"/><circle cx="10" cy="8" r="2.5" fill="rgba(255,255,255,.25)"/><circle cx="24" cy="11" r="5" fill="url(#navBlue)"/><circle cx="23.5" cy="9.5" r="1.5" fill="rgba(255,255,255,.2)"/><circle cx="33" cy="12.5" r="3.5" fill="url(#navGreen)"/><defs><radialGradient id="navGold" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8d06a"/><stop offset="100%" stop-color="#a07c15"/></radialGradient><radialGradient id="navBlue" cx="40%" cy="35%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient><radialGradient id="navGreen" cx="40%" cy="35%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#047857"/></radialGradient></defs></svg> Three <span>Worlds</span></a>
+    <ul class="nav-links">
+      <li><a href="#about" data-section="about">About</a></li>
+      <li><a href="#worlds" data-section="worlds">Three Worlds</a></li>
+      <li><a href="#impact" data-section="impact">Impact</a></li>
+      <li><a href="#services" data-section="services">Services</a></li>
+      <li><a href="#platform" data-section="platform">Platform</a></li>
+      <li><a href="#journey" data-section="journey">Journey</a></li>
+    </ul>
+    <a href="#contact" class="nav-cta magnetic-btn">Let's Talk</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-tag"><span class="hero-tag-dot"></span> Science &bull; Capital &bull; Community</div>
+      <h1 id="heroTitle"></h1>
+      <p class="hero-subtitle">I build financial systems, companies, and AI tools that let Europe's most excluded communities participate in the economy. PhD chemist. MBA strategist. Self-taught full-stack builder. Now building AI for the chemical industry.</p>
+
+      <div class="hero-status">
+        <div class="status-item"><span class="status-dot live" style="background:var(--green)"></span> Brussels, Belgium</div>
+        <div class="status-item"><span class="status-dot" style="background:var(--orange)"></span> Raising 3 daughters</div>
+        <div class="status-item"><span class="status-dot" style="background:var(--blue)"></span> Building 3 companies</div>
+      </div>
+
+      <div class="hero-cta-row">
+        <a href="#services" class="btn-primary magnetic-btn">What I Offer</a>
+        <a href="#about" class="btn-outline magnetic-btn">My Story</a>
+      </div>
+    </div>
+
+    <div class="hero-planets">
+      <div class="hero-planet-main planet planet-gold">
+        <div class="planet-surface"></div>
+        <div class="planet-shadow"></div>
+      </div>
+      <div class="hero-planet-sm1 planet planet-blue">
+        <div class="planet-surface" style="--surface-speed:18s"></div>
+        <div class="planet-shadow"></div>
+      </div>
+      <div class="hero-planet-sm2 planet planet-green">
+        <div class="planet-surface" style="--surface-speed:22s"></div>
+        <div class="planet-shadow"></div>
+      </div>
+      <div class="orbit-ring hero-orbit-1"><div class="orbit-dot"></div></div>
+      <div class="orbit-ring hero-orbit-2 dashed"><div class="orbit-dot" style="left:auto;right:20%;opacity:.5"></div></div>
+      <div class="moon hero-moon-1"></div>
+      <div class="moon hero-moon-2"></div>
+    </div>
+  </div>
+
+  <div class="scroll-cue">
+    <div class="scroll-line"></div>
+    <span class="scroll-label">Scroll</span>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div>
+        <span class="section-tag reveal">About</span>
+        <h2 class="section-title reveal s1">A scientist who<br>builds institutions</h2>
+        <p class="reveal s2">Born in a Roma village in Romania. Educated through the sacrifices of an older brother who worked night shifts so I could stay in school. I got a <strong>PhD in chemistry</strong>, moved to Belgium, and built a career in catalysis research — ruthenium catalysts, ammonia-to-hydrogen cracking, automotive emissions.</p>
+        <p class="reveal s3">Then I went back. Friends I'd played football with couldn't find work. They didn't ask for money — they asked for <strong>jobs</strong>. I started businesses to employ them. Then I asked: how do I scale this beyond the people who know me?</p>
+        <p class="reveal s4">That became <strong>REDI</strong> — the Roma Entrepreneurship Development Initiative — and the <strong>REDI Fund</strong>, the world's first investment vehicle for Roma entrepreneurs. I did an <strong>MBA</strong> to sharpen the strategy. Started the <strong>KU Leuven AI master</strong> — then chose to spend that time with my three daughters and build a company instead of writing another thesis. I already had a PhD; I didn't need to prove I could write. I needed to prove I could ship.</p>
+        <div class="about-badges reveal s5">
+          <div class="badge"><span class="badge-dot" style="background:var(--gold)"></span> PhD Chemistry</div>
+          <div class="badge"><span class="badge-dot" style="background:var(--blue)"></span> Executive MBA</div>
+          <div class="badge"><span class="badge-dot" style="background:var(--green)"></span> Self-taught Full-Stack</div>
+          <div class="badge"><span class="badge-dot" style="background:var(--orange)"></span> Father of 3</div>
+        </div>
+      </div>
+      <div class="about-cards">
+        <div class="about-card reveal-right s2" style="--card-accent:var(--gold)"><h4>PhD — Chemistry & Catalysis</h4><p>Ruthenium catalysts, NH3 cracking for H2, automotive catalysis at ULB & Bosal</p></div>
+        <div class="about-card reveal-right s3" style="--card-accent:var(--blue)"><h4>Executive MBA</h4><p>Capstone on scaling impact funds while preserving mission integrity</p></div>
+        <div class="about-card reveal-right s4" style="--card-accent:var(--green)"><h4>REDI International — CEO</h4><p>Europe's leading Roma economic empowerment platform, 8 countries</p></div>
+        <div class="about-card reveal-right s5" style="--card-accent:var(--orange)"><h4>BelgaLabs — Founder</h4><p>Consulting at the intersection of catalysis, AI, and social innovation</p></div>
+        <div class="about-card reveal-right s6" style="--card-accent:var(--blue)"><h4>Self-Taught Builder</h4><p>KU Leuven AI MSc (1 semester) &rarr; chose building over theory &rarr; full-stack by shipping</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THREE WORLDS -->
+<section class="worlds-section" id="worlds">
+  <div class="container">
+    <div class="worlds-intro">
+      <span class="section-tag reveal">Three Worlds</span>
+      <h2 class="section-title reveal s1">Three orbits.<br>One gravitational center.</h2>
+      <p class="section-desc reveal s2">Most people live in one domain. I operate across three — and the integration creates value nobody else can offer.</p>
+    </div>
+
+    <div class="world-row">
+      <div class="world-content w-gold reveal-left">
+        <div class="world-num"><span class="num-circle">01</span> Inclusive Finance</div>
+        <h3>Building bankable inclusion infrastructure</h3>
+        <p>Designed and launched the world's first Roma-focused investment fund. Proved that financial inclusion for Europe's most excluded community isn't charity — it's infrastructure with NPL rates matching or beating traditional portfolios.</p>
+        <p>Interviewed 1,100 Roma entrepreneurs. Deployed €15M+ across 8 countries. When everyone said it couldn't work, the data said otherwise.</p>
+        <div class="world-tags">
+          <span class="world-tag">Impact Investing</span><span class="world-tag">Microfinance</span><span class="world-tag">EU Policy</span><span class="world-tag">Fund Design</span><span class="world-tag">Roma Inclusion</span>
+        </div>
+      </div>
+      <div class="world-planet-wrap reveal-right s2">
+        <div class="world-planet planet planet-gold"><div class="planet-surface"></div><div class="planet-shadow"></div></div>
+        <div class="orbit-ring world-orbit" style="--orbit-speed:35s"><div class="orbit-dot" style="background:var(--gold)"></div></div>
+        <div class="orbit-ring world-orbit-2 dashed" style="--orbit-speed:55s"></div>
+      </div>
+    </div>
+
+    <div class="world-row reverse">
+      <div class="world-content w-blue reveal-right">
+        <div class="world-num"><span class="num-circle">02</span> Chemistry & Green Tech</div>
+        <h3>From catalysis labs to the hydrogen economy</h3>
+        <p>PhD-level expertise in catalysis research — from low-temperature emission catalysts to ammonia cracking for hydrogen production. Published researcher and industrial consultant.</p>
+        <p>I understand the science behind the green energy transition AND the EU R&D funding systems that accelerate it. That's a rare combination.</p>
+        <div class="world-tags">
+          <span class="world-tag">Catalysis</span><span class="world-tag">Hydrogen</span><span class="world-tag">NH3 Cracking</span><span class="world-tag">Automotive</span><span class="world-tag">Euro 7</span>
+        </div>
+      </div>
+      <div class="world-planet-wrap reveal-left s2">
+        <div class="world-planet planet planet-blue"><div class="planet-surface" style="--surface-speed:20s"></div><div class="planet-shadow"></div></div>
+        <div class="orbit-ring world-orbit" style="--orbit-speed:40s"><div class="orbit-dot" style="background:var(--blue)"></div></div>
+        <div class="orbit-ring world-orbit-2 dashed" style="--orbit-speed:60s"></div>
+      </div>
+    </div>
+
+    <div class="world-row">
+      <div class="world-content w-green reveal-left">
+        <div class="world-num"><span class="num-circle">03</span> Venture Building & Tech</div>
+        <h3>Building companies that build communities</h3>
+        <p>Creating "aggregator companies" — social enterprises that connect marginalized producers to mainstream markets. From elder care to employment agencies to creative industries.</p>
+        <p>MBA strategy meets self-taught full-stack development. I chose building real products over writing another thesis — and I'd do it again. The best learning happens in production.</p>
+        <div class="world-tags">
+          <span class="world-tag">Social Enterprise</span><span class="world-tag">Full-Stack</span><span class="world-tag">AI Tools</span><span class="world-tag">Incubation</span><span class="world-tag">Scaling</span>
+        </div>
+      </div>
+      <div class="world-planet-wrap reveal-right s2">
+        <div class="world-planet planet planet-green"><div class="planet-surface" style="--surface-speed:22s"></div><div class="planet-shadow"></div></div>
+        <div class="orbit-ring world-orbit" style="--orbit-speed:45s"><div class="orbit-dot" style="background:var(--green)"></div></div>
+        <div class="orbit-ring world-orbit-2 dashed" style="--orbit-speed:65s"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section class="impact-section" id="impact">
+  <div class="container">
+    <span class="section-tag reveal">Impact</span>
+    <h2 class="section-title reveal s1">Numbers that speak</h2>
+    <p class="section-desc reveal s2">A decade of proving that investment in excluded communities generates real returns.</p>
+    <div class="impact-grid">
+      <div class="impact-card reveal s1"><div class="impact-num"><span class="counter" data-target="15" data-prefix="€" data-suffix="M+">€0</span></div><div class="impact-label">Assets Under<br>Management</div></div>
+      <div class="impact-card reveal s2"><div class="impact-num"><span class="counter" data-target="800" data-suffix="+">0</span></div><div class="impact-label">Entrepreneurs<br>Funded</div></div>
+      <div class="impact-card reveal s3"><div class="impact-num"><span class="counter" data-target="5000" data-suffix="+">0</span></div><div class="impact-label">Jobs Created<br>or Supported</div></div>
+      <div class="impact-card reveal s4"><div class="impact-num"><span class="counter" data-target="8">0</span></div><div class="impact-label">European<br>Countries</div></div>
+      <div class="impact-card reveal s5"><div class="impact-num"><span class="counter" data-target="2500" data-suffix="+">0</span></div><div class="impact-label">Entrepreneurs<br>Trained</div></div>
+      <div class="impact-card reveal s6"><div class="impact-num"><span class="counter" data-target="65" data-suffix="%">0</span></div><div class="impact-label">Business<br>Survival Rate</div></div>
+      <div class="impact-card reveal s7"><div class="impact-num"><span class="counter" data-target="30" data-prefix="€" data-suffix="M">0</span></div><div class="impact-label">Fund Target<br>by 2029</div></div>
+      <div class="impact-card reveal s8"><div class="impact-num"><span class="counter" data-target="10" data-suffix="K">0</span></div><div class="impact-label">Entrepreneurs<br>to Train by 2029</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<div class="quote-section">
+  <div class="quote-orbits">
+    <div class="quote-orbit quote-orbit-1"></div>
+    <div class="quote-orbit quote-orbit-2"></div>
+    <div class="quote-orbit quote-orbit-3"></div>
+  </div>
+  <div class="quote-planet-bg planet planet-gold"><div class="planet-surface"></div><div class="planet-shadow"></div></div>
+  <div class="quote-mark reveal">&ldquo;</div>
+  <blockquote class="reveal s1">What we have is not given, but borrowed from someone else. I have a responsibility to come back and give back.</blockquote>
+  <div class="quote-attr reveal s2">— Petrica Dulgheru, GIIN Conference</div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="container">
+    <span class="section-tag reveal">What I Offer</span>
+    <h2 class="section-title reveal s1">Advisory & Consulting</h2>
+    <p class="section-desc reveal s2">Whether you're an investor, government, tech company, or fellow entrepreneur — here's how I can help.</p>
+    <div class="services-grid">
+      <div class="svc-card reveal s1" style="--svc-accent:var(--gold)"><div class="svc-icon" style="background:var(--gold-dim);color:var(--gold)">&#9878;</div><h3>Inclusive Fund Design</h3><p>Design financial inclusion vehicles for marginalized communities. Product design, investor pitch, portfolio management — based on a decade of operational data, not theory.</p><span class="svc-for">For: DFIs, Impact Investors, Foundations, Governments</span></div>
+      <div class="svc-card reveal s2" style="--svc-accent:var(--blue)"><div class="svc-icon" style="background:var(--blue-dim);color:var(--blue)">&#9881;</div><h3>Catalysis & Hydrogen</h3><p>Technical guidance on automotive catalysis, ammonia-to-hydrogen conversion, Euro 7 compliance. Bridging academic research and commercial application.</p><span class="svc-for">For: Industrial Companies, R&D Teams, Cleantech Startups</span></div>
+      <div class="svc-card reveal s3" style="--svc-accent:var(--green)"><div class="svc-icon" style="background:var(--green-dim);color:var(--green)">&#9733;</div><h3>Social Enterprise Incubation</h3><p>Build market-making companies that serve excluded populations. Strategy, operational design, and go-to-market for aggregator business models.</p><span class="svc-for">For: Social Entrepreneurs, NGOs, Corporate CSR</span></div>
+      <div class="svc-card reveal s4" style="--svc-accent:var(--orange)"><div class="svc-icon" style="background:var(--orange-dim);color:var(--orange)">&#9888;</div><h3>EU Funding & Policy Strategy</h3><p>Navigate EU funding instruments (ERDF, ESF+, CERV, EIF guarantees) and policy. 15 years with DG EMPL, DG NEAR, EIF, CEB.</p><span class="svc-for">For: NGOs, Governments, Multilaterals</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGO MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-label"><span class="section-tag reveal" style="text-align:center;display:block;margin-bottom:0">Trusted By</span></div>
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <div class="logo-pill">European Commission</div>
+      <div class="logo-pill">European Investment Fund</div>
+      <div class="logo-pill">Council of Europe Dev. Bank</div>
+      <div class="logo-pill">Soros Economic Dev. Fund</div>
+      <div class="logo-pill">Ceniarth</div>
+      <div class="logo-pill">Trimtab Capital</div>
+      <div class="logo-pill">GIIN</div>
+      <div class="logo-pill">Roma Foundation for Europe</div>
+      <div class="logo-pill">Heraeus</div>
+      <div class="logo-pill">KU Leuven</div>
+      <!-- duplicate for seamless loop -->
+      <div class="logo-pill">European Commission</div>
+      <div class="logo-pill">European Investment Fund</div>
+      <div class="logo-pill">Council of Europe Dev. Bank</div>
+      <div class="logo-pill">Soros Economic Dev. Fund</div>
+      <div class="logo-pill">Ceniarth</div>
+      <div class="logo-pill">Trimtab Capital</div>
+      <div class="logo-pill">GIIN</div>
+      <div class="logo-pill">Roma Foundation for Europe</div>
+      <div class="logo-pill">Heraeus</div>
+      <div class="logo-pill">KU Leuven</div>
+    </div>
+  </div>
+</div>
+
+<!-- PLATFORM -->
+<section class="platform-section" id="platform">
+  <div class="container">
+    <div class="platform-grid">
+      <div class="platform-text">
+        <div class="platform-label reveal"><span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s ease-in-out infinite"></span> Now Building</div>
+        <h3 class="reveal s1">Chemical Intelligence<br><em>Platform</em></h3>
+        <p class="reveal s2">AI that actually understands chemistry. Built by a PhD chemist, not a software company guessing at science. REACH compliance and green hydrogen project assessment — automated.</p>
+        <p class="reveal s3">The same depth that designed a €15M impact fund now powers an AI engine that predicts hazard classifications, generates Safety Data Sheets, and models hydrogen project economics.</p>
+
+        <div class="platform-modules reveal s4">
+          <div class="platform-module">
+            <h4><span class="platform-module-dot" style="background:var(--gold)"></span> REACH Engine</h4>
+            <p>CLP classification, SDS generation, dossier preparation, regulatory alerts. QSAR-powered.</p>
+          </div>
+          <div class="platform-module">
+            <h4><span class="platform-module-dot" style="background:var(--blue)"></span> H₂ Intelligence</h4>
+            <p>Catalyst selection, performance prediction, techno-economics, EU funding eligibility.</p>
+          </div>
+        </div>
+
+        <div class="platform-cta-row reveal s5">
+          <a href="platform.html" class="btn-gold magnetic-btn">Explore the Platform</a>
+          <a href="platform.html#pricing" class="btn-ghost magnetic-btn">See Pricing</a>
+        </div>
+      </div>
+
+      <div class="platform-visual reveal-right s3">
+        <div class="platform-mockup">
+          <div class="mockup-bar"><div class="mockup-dot"></div><div class="mockup-dot"></div><div class="mockup-dot"></div></div>
+          <div style="font-size:.65rem;color:rgba(246,244,239,.3);text-transform:uppercase;letter-spacing:2px;margin-bottom:1rem">Substance Analysis — CAS 50-00-0</div>
+          <div class="mockup-row"><span class="mockup-label">Acute Tox.</span><div class="mockup-value"><div class="mockup-fill" style="--fill:85%;background:var(--gold)"></div></div></div>
+          <div class="mockup-row"><span class="mockup-label">Skin Corr.</span><div class="mockup-value"><div class="mockup-fill" style="--fill:72%;background:#ef4444"></div></div></div>
+          <div class="mockup-row"><span class="mockup-label">Carc.</span><div class="mockup-value"><div class="mockup-fill" style="--fill:91%;background:#ef4444"></div></div></div>
+          <div class="mockup-row"><span class="mockup-label">STOT RE</span><div class="mockup-value"><div class="mockup-fill" style="--fill:68%;background:var(--gold)"></div></div></div>
+          <div class="mockup-row"><span class="mockup-label">Aquatic</span><div class="mockup-value"><div class="mockup-fill" style="--fill:45%;background:var(--blue)"></div></div></div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.2rem">
+            <span class="mockup-badge mockup-badge-gold">GHS05 — Corrosion</span>
+            <span class="mockup-badge mockup-badge-gold">GHS06 — Toxic</span>
+            <span class="mockup-badge mockup-badge-blue">GHS08 — Health</span>
+          </div>
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.06);font-size:.7rem;color:rgba(246,244,239,.35)">
+            ✓ SDS generated · ✓ CLP compliant · Confidence: 94%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- JOURNEY -->
+<section class="journey-section" id="journey">
+  <div class="container">
+    <span class="section-tag reveal">Journey</span>
+    <h2 class="section-title reveal s1">From a Roma village<br>to Brussels</h2>
+    <p class="section-desc reveal s2">Not linear. Chemistry, then business, then social innovation, then tech — each building on the last.</p>
+    <div class="timeline">
+      <div class="tl-item reveal"><div class="tl-year">Romania</div><h4>Born in a Roma Community</h4><p>Rural Romania. An older brother worked night shifts so Petrica could continue school. That sacrifice shaped everything.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">University</div><h4>PhD in Chemistry</h4><p>Ruthenium catalysis, ammonia decomposition for hydrogen. Published researcher with deep lab-to-industry expertise.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">Belgium</div><h4>ULB & Bosal — Industrial R&D</h4><p>Automotive emissions, catalytic converters. Bridging academic research with industrial manufacturing at scale.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">Mid-2000s</div><h4>First Businesses for the Community</h4><p>Flower trading in The Hague, office cleaning in Brussels — built to create jobs for friends who couldn't find work. Age 26.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">~2015</div><h4>REDI Founded</h4><p>Launched the Roma Entrepreneurship Development Initiative. Interviewed 1,100 Roma entrepreneurs. Designed the model from the ground up.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">2021</div><h4>REDI Fund Launched</h4><p>Secured first-mover investors. Deployed €5M pilot. NPL rates matched traditional portfolios — shattering the "too risky" myth.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">2023</div><h4>GIIN & Global Stage</h4><p>Presented at the Global Impact Investing Network. The message: it takes more than capital, and first-movers willing to lean into risk.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">2024</div><h4>MBA. KU Leuven AI. BelgaLabs.</h4><p>Completed MBA. Started AI master — chose daughters and company-building over another thesis after one semester. Founded BelgaLabs. Learned full-stack by shipping.</p></div>
+      <div class="tl-item reveal"><div class="tl-year">2026+</div><h4>The Next Chapter</h4><p>Growing REDI Fund to €30M. Training 10,000 entrepreneurs. Launching 5 social enterprises. Being present for three daughters. Building in public.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <canvas class="cta-canvas" id="ctaCanvas"></canvas>
+  <div class="cta-planets">
+    <div class="cta-p1 planet planet-gold"><div class="planet-surface"></div><div class="planet-shadow"></div></div>
+    <div class="cta-p2 planet planet-blue"><div class="planet-surface" style="--surface-speed:18s"></div><div class="planet-shadow"></div></div>
+    <div class="cta-p3 planet planet-green"><div class="planet-surface" style="--surface-speed:22s"></div><div class="planet-shadow"></div></div>
+  </div>
+  <h2 class="reveal">Let's build something<br>that lasts</h2>
+  <p class="reveal s1">Whether you want to invest, consult, partner, or just talk — I'm open to conversations that lead somewhere real.</p>
+  <div class="cta-buttons reveal s2">
+    <a href="mailto:office@redi-ngo.eu" class="btn-primary magnetic-btn">Start a Conversation</a>
+    <a href="https://www.linkedin.com/in/petrica-dulgheru/" class="btn-outline magnetic-btn" target="_blank">LinkedIn</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <svg width="28" height="14" viewBox="0 0 38 20"><circle cx="10" cy="10" r="8" fill="url(#navGold)"/><circle cx="24" cy="11" r="5" fill="url(#navBlue)"/><circle cx="33" cy="12.5" r="3.5" fill="url(#navGreen)"/></svg>
+    <p>&copy; 2026 Three Worlds &bull; Petrica Dulgheru &bull; Brussels</p>
+  </div>
+  <div style="display:flex;align-items:center;gap:1.5rem">
+    <span style="font-size:.72rem;color:var(--text3);font-style:italic">Science. Capital. Community.</span>
+    <div class="footer-links">
+      <a href="mailto:office@redi-ngo.eu">Email</a>
+      <a href="https://www.linkedin.com/in/petrica-dulgheru/" target="_blank">LinkedIn</a>
+      <a href="https://rfreurope.org" target="_blank">REDI</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+// === LOADER ===
+window.addEventListener('load',()=>{setTimeout(()=>document.getElementById('loader').classList.add('hidden'),1600)});
+
+// === SCROLL PROGRESS BAR ===
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  const pct=(h.scrollTop/(h.scrollHeight-h.clientHeight))*100;
+  document.getElementById('scrollProgress').style.width=pct+'%';
+},{passive:true});
+
+// === NAV SCROLL + ACTIVE SECTION ===
+const nav=document.getElementById('nav');
+const sections=['about','worlds','impact','services','platform','journey'];
+const navLinks=document.querySelectorAll('.nav-links a[data-section]');
+function updateNav(){
+  nav.classList.toggle('scrolled',window.scrollY>50);
+  let current='';
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.getBoundingClientRect().top<window.innerHeight*.4) current=id;
+  });
+  navLinks.forEach(a=>{
+    a.classList.toggle('active',a.dataset.section===current);
+  });
+}
+window.addEventListener('scroll',updateNav,{passive:true});
+
+// === HERO TITLE WORD-BY-WORD REVEAL ===
+const titleHTML='Three Worlds.<br><em>One mission.</em>';
+const titleEl=document.getElementById('heroTitle');
+// Parse into words, preserving <br> and <em>
+const words=[];
+let inEm=false;
+titleHTML.split(/(<br>|<em>|<\/em>)/g).forEach(part=>{
+  if(part==='<br>'){words.push({type:'br'});return}
+  if(part==='<em>'){inEm=true;return}
+  if(part==='</em>'){inEm=false;return}
+  part.split(/\s+/).filter(Boolean).forEach(w=>words.push({type:'word',text:w,em:inEm}));
+});
+let html='';let wordIdx=0;
+words.forEach(w=>{
+  if(w.type==='br'){html+='<br>';return}
+  const delay=.9+wordIdx*.12;
+  const tag=w.em?'em':'span';
+  html+=`<${tag} class="word" style="animation-delay:${delay}s">${w.text}</${tag}> `;
+  wordIdx++;
+});
+titleEl.innerHTML=html;
+
+// === INTERSECTION OBSERVER ===
+const obs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el=>obs.observe(el));
+
+// === COUNTERS ===
+const cObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting&&!e.target.dataset.counted){e.target.dataset.counted='true';animateCounter(e.target)}})},{threshold:.5});
+document.querySelectorAll('.counter').forEach(el=>cObs.observe(el));
+function animateCounter(el){
+  const target=parseInt(el.dataset.target),prefix=el.dataset.prefix||'',suffix=el.dataset.suffix||'',duration=2200,start=performance.now();
+  function easeOut(t){return t===1?1:1-Math.pow(2,-10*t)}
+  function update(now){
+    const p=Math.min((now-start)/duration,1),current=Math.round(easeOut(p)*target);
+    el.textContent=prefix+current.toLocaleString()+suffix;
+    if(p<1)requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+// === SMOOTH SCROLL ===
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',function(e){e.preventDefault();const t=document.querySelector(this.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'})})
+});
+
+// === PARALLAX on world planets ===
+window.addEventListener('scroll',()=>{
+  document.querySelectorAll('.world-planet-wrap').forEach(el=>{
+    const rect=el.getBoundingClientRect();
+    const offset=(rect.top-window.innerHeight/2)*0.035;
+    el.style.transform=`translateY(${offset}px)`;
+  });
+},{passive:true});
+
+// === TILT on service cards ===
+document.querySelectorAll('.svc-card').forEach(card=>{
+  let angle=0;
+  card.addEventListener('mousemove',e=>{
+    const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;
+    angle=Math.atan2(y,x)*180/Math.PI+180;
+    card.style.setProperty('--angle',angle+'deg');
+    card.style.transform=`translateY(-5px) perspective(600px) rotateY(${x*4}deg) rotateX(${-y*4}deg)`;
+  });
+  card.addEventListener('mouseleave',()=>{card.style.transform=''});
+});
+
+// === MAGNETIC BUTTONS ===
+document.querySelectorAll('.magnetic-btn').forEach(btn=>{
+  btn.addEventListener('mousemove',e=>{
+    const r=btn.getBoundingClientRect();
+    const x=(e.clientX-r.left-r.width/2)*.25;
+    const y=(e.clientY-r.top-r.height/2)*.25;
+    btn.style.transform=`translate(${x}px,${y}px)`;
+  });
+  btn.addEventListener('mouseleave',()=>{btn.style.transform=''});
+});
+
+// === STARFIELD CANVAS ===
+function initStarfield(canvasId,density){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let stars=[];
+  function resize(){
+    const rect=canvas.parentElement.getBoundingClientRect();
+    canvas.width=rect.width;canvas.height=rect.height;
+    stars=[];
+    const count=Math.floor(rect.width*rect.height/density);
+    for(let i=0;i<count;i++){
+      stars.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+.3,a:Math.random(),speed:Math.random()*.005+.002});
+    }
+  }
+  resize();window.addEventListener('resize',resize);
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    stars.forEach(s=>{
+      s.a+=s.speed;
+      const alpha=.15+Math.sin(s.a)*0.12;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(180,150,50,${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+initStarfield('heroCanvas',6000);
+initStarfield('ctaCanvas',8000);
+
+// === ANIMATED GRADIENT BORDER on svc-cards ===
+// Already handled via CSS --angle variable set in mousemove
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120" viewBox="0 0 300 120">
+  <defs>
+    <radialGradient id="goldGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#e8d06a"/><stop offset="100%" stop-color="#a07c15"/></radialGradient>
+    <radialGradient id="blueGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#60a5fa"/><stop offset="100%" stop-color="#1d4ed8"/></radialGradient>
+    <radialGradient id="greenGrad" cx="40%" cy="35%"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#047857"/></radialGradient>
+  </defs>
+  <ellipse cx="150" cy="60" rx="55" ry="55" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="4,4"/>
+  <circle cx="150" cy="60" r="22" fill="url(#goldGrad)"/>
+  <circle cx="143" cy="52" r="7" fill="rgba(255,255,255,.2)"/>
+  <circle cx="205" cy="40" r="12" fill="url(#blueGrad)"/>
+  <circle cx="201" cy="36" r="3.5" fill="rgba(255,255,255,.2)"/>
+  <circle cx="105" cy="85" r="9" fill="url(#greenGrad)"/>
+  <circle cx="102" cy="82" r="2.5" fill="rgba(255,255,255,.2)"/>
+  <text x="150" y="118" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="11" letter-spacing="3" fill="#f0f0f0">THREE WORLDS</text>
+</svg>
