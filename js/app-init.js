@@ -2,7 +2,7 @@
    APP INITIALIZATION — View switching, H2 module, alerts, settings
    ═══════════════════════════════════════════════════════════════════════ */
 
-const VIEW_TITLES={dashboard:'Dashboard',reach:'REACH Engine',h2:'H₂ Intelligence',alerts:'Regulatory Alerts',settings:'Settings'};
+const VIEW_TITLES={dashboard:'Dashboard',reach:'Registration Workflow',h2:'H₂ Intelligence',alerts:'Regulatory Alerts',settings:'Settings'};
 
 function switchView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -15,10 +15,8 @@ function switchView(id){
 }
 
 function switchReachTab(id){
-  document.querySelectorAll('#view-reach .tab').forEach(t=>t.classList.remove('active'));
-  const tab=document.querySelector(`[data-reach-tab="${id}"]`);if(tab)tab.classList.add('active');
-  document.querySelectorAll('#view-reach .tab-content').forEach(c=>c.classList.remove('active'));
-  const content=document.getElementById('reach-'+id);if(content)content.classList.add('active');
+  // Legacy compatibility — now redirects to workflow
+  switchView('reach');
 }
 
 function switchH2Tab(id){
@@ -136,8 +134,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelectorAll('.sb-item').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
   document.getElementById('tbHamburger').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
 
-  // REACH tabs
-  document.querySelectorAll('[data-reach-tab]').forEach(t=>t.addEventListener('click',()=>switchReachTab(t.dataset.reachTab)));
+  // H2 tabs
   document.querySelectorAll('[data-h2-tab]').forEach(t=>t.addEventListener('click',()=>switchH2Tab(t.dataset.h2Tab)));
 
   // Modal
@@ -146,9 +143,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Init modules
   animateCounters();
   initSubstanceSearch();
-  initESDSGenerator();
+  if (typeof initESDSGenerator === 'function') initESDSGenerator();
   initCopilot();
-  renderAlerts('alertsList');
   renderAlerts('fullAlertsList');
   renderFunding();
 
@@ -156,7 +152,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('findCatalysts').addEventListener('click',findCatalysts);
   document.getElementById('calcTea').addEventListener('click',calcTEA);
   document.getElementById('teaCountry').addEventListener('change',()=>{document.getElementById('teaElec').value=ELEC_PRICES[document.getElementById('teaCountry').value]||60});
-  document.getElementById('generateSds').addEventListener('click',generateESDS);
+  const genSdsBtn = document.getElementById('generateSds');
+  if (genSdsBtn) genSdsBtn.addEventListener('click',generateESDS);
   document.getElementById('alertSubscribe').addEventListener('click',subscribeAlerts);
   document.getElementById('copilotToggle').addEventListener('click',toggleCopilot);
   document.getElementById('copilotSend').addEventListener('click',sendCopilotMessage);

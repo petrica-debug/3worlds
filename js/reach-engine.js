@@ -1,349 +1,657 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   REACH ENGINE — Core logic for substance analysis, dossier completeness,
-   exposure scenarios, read-across, restriction checking, IUCLID export,
-   SDS generation, and submission readiness.
+   REACH ENGINE — Guided Registration Workflow with AI Intelligence
+   5-step wizard: Identify → Scope → Gap Analysis → Draft → Submit
    ═══════════════════════════════════════════════════════════════════════ */
 
-// ─── SUBSTANCE SEARCH & DETAIL ───────────────────────────────────────────
-function initSubstanceSearch(){
-  const inp=document.getElementById('substanceSearch');
-  const res=document.getElementById('searchResults');
-  const det=document.getElementById('substanceDetail');
-  renderSubstanceList(CHEMICALS_DB,res);
-  inp.addEventListener('input',()=>{
-    det.style.display='none';res.style.display='';
-    const q=inp.value.toLowerCase().trim();
-    if(!q){renderSubstanceList(CHEMICALS_DB,res);return}
-    renderSubstanceList(CHEMICALS_DB.filter(c=>c.name.toLowerCase().includes(q)||c.cas.includes(q)||c.formula.toLowerCase().includes(q)||(c.ecNumber||'').includes(q)),res);
+let workflowState = {
+  step: 0,
+  substance: null,
+  tonnageBand: null,
+  role: null,
+  gaps: [],
+  strategies: {},
+  generatedDocs: {},
+  aiAnalysis: {}
+};
+
+const WORKFLOW_STEPS = [
+  { id: 'identify', label: 'Substance ID', icon: '🔬' },
+  { id: 'scope', label: 'Regulatory Scope', icon: '📋' },
+  { id: 'gaps', label: 'Gap Analysis', icon: '🔍' },
+  { id: 'draft', label: 'Dossier Drafting', icon: '📝' },
+  { id: 'submit', label: 'Submission', icon: '🚀' }
+];
+
+// ─── SUBSTANCE SEARCH (kept for compatibility) ──────────────────────────
+function initSubstanceSearch() {
+  const inp = document.getElementById('substanceSearch');
+  const res = document.getElementById('searchResults');
+  if (!inp || !res) return;
+  renderSubstanceList(CHEMICALS_DB, res);
+  inp.addEventListener('input', () => {
+    const det = document.getElementById('substanceDetail');
+    if (det) det.style.display = 'none';
+    res.style.display = '';
+    const q = inp.value.toLowerCase().trim();
+    if (!q) { renderSubstanceList(CHEMICALS_DB, res); return; }
+    renderSubstanceList(CHEMICALS_DB.filter(c =>
+      c.name.toLowerCase().includes(q) || c.cas.includes(q) ||
+      c.formula.toLowerCase().includes(q) || (c.ecNumber || '').includes(q)
+    ), res);
   });
 }
 
-function renderSubstanceList(list,container){
-  if(!list.length){container.innerHTML='<div class="empty" style="padding:2rem;text-align:center;color:var(--t3)"><div style="font-size:2rem;margin-bottom:.5rem;opacity:.4">🔍</div>No substances found.</div>';return}
-  container.innerHTML=list.map(c=>{
-    const band=TONNAGE_BANDS[c.tonnageBand];
-    const dc=c.dossierCompleteness||{};
-    const eps=band?band.endpoints:[];
-    const done=eps.filter(e=>dc[e]==='complete'||dc[e]==='waived'||dc[e]==='not_required'||dc[e]==='read_across').length;
-    const pct=eps.length?Math.round(done/eps.length*100):0;
-    const pctColor=pct>=90?'var(--green)':pct>=60?'var(--orange)':'var(--red)';
-    return `<div class="substance-row" onclick="showSubstanceDetail('${c.cas}')">
-      <div><div class="sr-name">${c.name}${c.svhc?' <span class="pill pill-red">SVHC</span>':''}${c.harmonisedCLP?' <span class="pill pill-blue">Harmonised CLP</span>':''}</div>
-      <div class="sr-meta">CAS ${c.cas} · EC ${c.ecNumber||'—'} · ${c.formula} · MW ${c.mw} · ${band?band.label:c.tonnageBand}</div></div>
+function renderSubstanceList(list, container) {
+  if (!list.length) { container.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--t3)">🔍 No substances found.</div>'; return; }
+  container.innerHTML = list.map(c => {
+    const band = TONNAGE_BANDS[c.tonnageBand];
+    const dc = c.dossierCompleteness || {};
+    const eps = band ? band.endpoints : [];
+    const done = eps.filter(e => dc[e] === 'complete' || dc[e] === 'waived' || dc[e] === 'not_required' || dc[e] === 'read_across').length;
+    const pct = eps.length ? Math.round(done / eps.length * 100) : 0;
+    const pctColor = pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--orange)' : 'var(--red)';
+    return `<div class="substance-row" onclick="startWorkflow('${c.cas}')">
+      <div><div class="sr-name">${c.name}${c.svhc ? ' <span class="pill pill-red">SVHC</span>' : ''}${c.harmonisedCLP ? ' <span class="pill pill-blue">Harmonised CLP</span>' : ''}</div>
+      <div class="sr-meta">CAS ${c.cas} · EC ${c.ecNumber || '—'} · ${c.formula} · MW ${c.mw} · ${band ? band.label : c.tonnageBand}</div></div>
       <div class="sr-right"><span style="font-size:.72rem;font-weight:700;color:${pctColor}">${pct}%</span>
-      ${c.pictograms.slice(0,4).map(p=>`<span style="font-size:.9rem" title="${GHS_PICTOGRAMS[p]?.name||p}">${GHS_PICTOGRAMS[p]?.icon||''}</span>`).join('')}
-      </div></div>`}).join('');
+      ${c.pictograms.slice(0, 4).map(p => `<span style="font-size:.9rem" title="${GHS_PICTOGRAMS[p]?.name || p}">${GHS_PICTOGRAMS[p]?.icon || ''}</span>`).join('')}
+      <button class="btn btn-gold btn-sm" onclick="event.stopPropagation();startWorkflow('${c.cas}')">Start Registration →</button>
+      </div></div>`;
+  }).join('');
 }
 
-function showSubstanceDetail(cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  document.getElementById('searchResults').style.display='none';
-  const det=document.getElementById('substanceDetail');det.style.display='block';
-  const pc=c.physChem;
-  const auth=AUTHORIZATION_ENTRIES[cas];
-  const dnelData=DNEL_PNEC[cas];
-  const transport=UN_TRANSPORT[cas];
-  const restrictions=ANNEX_XVII_RESTRICTIONS.filter(r=>r.substances.includes(cas));
+// ─── WORKFLOW ENGINE ────────────────────────────────────────────────────
+function startWorkflow(cas) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas);
+  if (!c) return;
 
-  det.innerHTML=`<div class="detail-panel">
-    <div class="dp-header">
-      <div><div class="dp-title">${c.name}</div>
-      <div class="dp-subtitle">CAS ${c.cas} · EC ${c.ecNumber||'—'} · ${c.formula} · MW ${c.mw} g/mol · ${c.state}</div>
-      <div style="margin-top:.4rem">${c.svhc?'<span class="pill pill-red">SVHC — Candidate List</span>':''}${c.harmonisedCLP?`<span class="pill pill-blue">Harmonised CLP: ${c.clpIndex}</span>`:'<span class="pill pill-orange">Self-classification</span>'}
-      <span class="pill pill-gold">${TONNAGE_BANDS[c.tonnageBand]?.label||c.tonnageBand}</span>
-      <span class="pill pill-${c.registrationStatus==='Active'?'green':'red'}">${c.registrationStatus}</span></div></div>
-      <button class="dp-close" onclick="document.getElementById('substanceDetail').style.display='none';document.getElementById('searchResults').style.display=''">✕</button>
+  workflowState = {
+    step: 0, substance: c, tonnageBand: c.tonnageBand,
+    role: null, gaps: [], strategies: {}, generatedDocs: {}, aiAnalysis: {}
+  };
+
+  copilotContext = {
+    substance: c,
+    auth: AUTHORIZATION_ENTRIES[cas],
+    dnelData: DNEL_PNEC[cas],
+    transport: UN_TRANSPORT[cas],
+    restrictions: ANNEX_XVII_RESTRICTIONS.filter(r => r.substances.includes(cas))
+  };
+
+  document.getElementById('searchResults').style.display = 'none';
+  const det = document.getElementById('substanceDetail');
+  if (det) det.style.display = 'none';
+
+  const wf = document.getElementById('workflowContainer');
+  if (wf) wf.style.display = 'block';
+
+  renderWorkflow();
+}
+
+function renderWorkflow() {
+  const container = document.getElementById('workflowContainer');
+  if (!container) return;
+
+  const stepsHtml = WORKFLOW_STEPS.map((s, i) => {
+    const state = i < workflowState.step ? 'done' : i === workflowState.step ? 'active' : 'pending';
+    return `<div class="wf-step ${state}" onclick="${i <= workflowState.step ? 'goToStep(' + i + ')' : ''}">
+      <div class="wf-step-icon">${state === 'done' ? '✓' : s.icon}</div>
+      <div class="wf-step-label">${s.label}</div>
+    </div>`;
+  }).join('<div class="wf-step-line"></div>');
+
+  container.innerHTML = `
+    <div class="wf-header">
+      <div class="wf-title-row">
+        <div>
+          <h2 class="wf-title">REACH Registration Workflow</h2>
+          <div class="wf-subtitle">${workflowState.substance.name} · CAS ${workflowState.substance.cas} · ${TONNAGE_BANDS[workflowState.tonnageBand]?.label || ''}</div>
+        </div>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn btn-outline btn-sm" onclick="exitWorkflow()">✕ Exit</button>
+          <button class="btn btn-purple btn-sm" onclick="askCopilot('Give me a complete regulatory overview of ${workflowState.substance.name} (CAS ${workflowState.substance.cas}). Cover registration status, CLP classification, SVHC status, restrictions, and key compliance concerns.')">🧠 AI Overview</button>
+        </div>
+      </div>
+      <div class="wf-steps">${stepsHtml}</div>
     </div>
-    <div class="dp-body">
+    <div class="wf-body" id="wfBody"></div>`;
 
-      <div class="dp-section"><div class="dp-section-title">Substance Identity (IUCLID Section 1)</div>
-        <table class="dp-table">
-          <tr><td>IUPAC Name</td><td>${c.iupac||c.name}</td></tr>
-          <tr><td>CAS Number</td><td>${c.cas}</td></tr>
-          <tr><td>EC Number</td><td>${c.ecNumber||'—'}</td></tr>
-          <tr><td>Molecular Formula</td><td>${c.formula}</td></tr>
-          <tr><td>SMILES</td><td>${c.smiles||'—'}</td></tr>
-          <tr><td>InChI</td><td style="font-size:.65rem;word-break:break-all">${c.inchi||'—'}</td></tr>
-          <tr><td>REACH Registration</td><td>${c.reach||'Pending'}</td></tr>
-          <tr><td>Registration Type</td><td>${c.registrationType||'—'} ${c.jointSubmission?'(Joint Submission)':''}</td></tr>
-          <tr><td>Lead Registrant</td><td>${c.leadRegistrant||'—'}</td></tr>
-          <tr><td>Tonnage Band</td><td>${TONNAGE_BANDS[c.tonnageBand]?.label||c.tonnageBand} (Annex ${TONNAGE_BANDS[c.tonnageBand]?.annex||'—'})</td></tr>
-          <tr><td>ECHA Link</td><td><a href="${c.echaUrl||'#'}" target="_blank" style="font-size:.72rem">${c.echaUrl?'View on ECHA →':'—'}</a></td></tr>
-        </table></div>
-
-      <div class="dp-section"><div class="dp-section-title">CLP Classification (EC 1272/2008)</div>
-        <div style="margin-bottom:.5rem"><strong style="font-size:.82rem;color:${c.signal==='Danger'?'var(--red)':'var(--gold)'}">⬤ ${c.signal}</strong>
-        ${c.harmonisedCLP?` <span style="font-size:.72rem;color:var(--t3)">— Harmonised entry, Index No. ${c.clpIndex}, ${c.atpNumber}</span>`:' <span style="font-size:.72rem;color:var(--t3)">— Self-classification by registrant(s)</span>'}</div>
-        <div style="margin-bottom:.6rem">${c.clp.map(cl=>{
-          const col=cl.includes('Carc')||cl.includes('Muta')||cl.includes('Repr')?'red':cl.includes('Acute Tox. 1')||cl.includes('Acute Tox. 2')||cl.includes('Acute Tox. 3')?'red':cl.includes('Flam')||cl.includes('Ox.')?'orange':cl.includes('Aquatic')?'green':cl.includes('Skin Corr')||cl.includes('Resp. Sens')?'purple':'gold';
-          return `<span class="pill pill-${col}">${cl}</span>`}).join('')}</div>
-        <div style="margin-bottom:.6rem">${c.pictograms.map(p=>`<span class="pictogram">${GHS_PICTOGRAMS[p]?.icon||''} ${p} — ${GHS_PICTOGRAMS[p]?.name||''}</span>`).join('')}</div>
-        <div style="margin-bottom:.4rem;font-size:.72rem;font-weight:600;color:var(--t3)">Hazard Statements:</div>
-        ${c.hStatements.map(h=>`<div class="h-stmt"><code>${h}</code><span>${H_STATEMENTS[h]||h}</span></div>`).join('')}
-        <div style="margin-top:.5rem;font-size:.72rem;font-weight:600;color:var(--t3)">Precautionary Statements:</div>
-        <div style="font-size:.78rem;color:var(--t2);margin-top:.2rem">${c.pStatements.join(', ')}</div>
-      </div>
-
-      <div class="dp-section"><div class="dp-section-title">Physical & Chemical Properties (IUCLID Section 4)</div>
-        <table class="dp-table">
-          <tr><td>Melting Point</td><td>${pc.mp}°C</td></tr>
-          <tr><td>Boiling Point</td><td>${pc.bp}°C</td></tr>
-          <tr><td>Density (20°C)</td><td>${pc.density} g/cm³</td></tr>
-          <tr><td>Vapour Pressure (20°C)</td><td>${pc.vp} Pa</td></tr>
-          <tr><td>Log Kow</td><td>${pc.logP!==null?pc.logP:'N/A (inorganic)'}</td></tr>
-          <tr><td>Water Solubility</td><td>${pc.solubility}</td></tr>
-          ${pc.flashPoint!==null?`<tr><td>Flash Point</td><td>${pc.flashPoint}°C</td></tr>`:''}
-          ${pc.autoIgnition!==null?`<tr><td>Auto-ignition Temperature</td><td>${pc.autoIgnition}°C</td></tr>`:''}
-          ${pc.ph?`<tr><td>pH</td><td>${pc.ph}</td></tr>`:''}
-        </table></div>
-
-      ${dnelData?`<div class="dp-section"><div class="dp-section-title">DNEL / PNEC Values (Risk Characterisation)</div>
-        <table class="dp-table">
-          <tr><td colspan="2" style="color:var(--gold);font-weight:700;border-bottom:1px solid var(--border)">DNELs (Derived No-Effect Levels)</td></tr>
-          ${dnelData.dnelWorkerInhal!==null?`<tr><td>Worker — Inhalation (long-term)</td><td>${dnelData.dnelWorkerInhal} mg/m³</td></tr>`:''}
-          ${dnelData.dnelWorkerDermal!==null?`<tr><td>Worker — Dermal (long-term)</td><td>${dnelData.dnelWorkerDermal} mg/kg bw/d</td></tr>`:''}
-          ${dnelData.dnelGenPopInhal!==null?`<tr><td>General Population — Inhalation</td><td>${dnelData.dnelGenPopInhal} mg/m³</td></tr>`:''}
-          ${dnelData.dnelGenPopDermal!==null?`<tr><td>General Population — Dermal</td><td>${dnelData.dnelGenPopDermal} mg/kg bw/d</td></tr>`:''}
-          ${dnelData.dnelGenPopOral!==null?`<tr><td>General Population — Oral</td><td>${dnelData.dnelGenPopOral} mg/kg bw/d</td></tr>`:''}
-          <tr><td colspan="2" style="color:var(--blue);font-weight:700;border-bottom:1px solid var(--border);padding-top:.5rem">PNECs (Predicted No-Effect Concentrations)</td></tr>
-          ${dnelData.pnecFreshwater!==null?`<tr><td>Freshwater</td><td>${dnelData.pnecFreshwater} mg/L</td></tr>`:''}
-          ${dnelData.pnecMarine!==null?`<tr><td>Marine water</td><td>${dnelData.pnecMarine} mg/L</td></tr>`:''}
-          ${dnelData.pnecSTP!==null?`<tr><td>STP microorganisms</td><td>${dnelData.pnecSTP} mg/L</td></tr>`:''}
-          ${dnelData.pnecSediment!==null?`<tr><td>Sediment (freshwater)</td><td>${dnelData.pnecSediment} mg/kg dw</td></tr>`:''}
-          ${dnelData.pnecSoil!==null?`<tr><td>Soil</td><td>${dnelData.pnecSoil} mg/kg dw</td></tr>`:''}
-        </table></div>`:``}
-
-      ${restrictions.length?`<div class="dp-section"><div class="dp-section-title">Annex XVII Restrictions</div>
-        ${restrictions.map(r=>`<div style="padding:.6rem;background:var(--red-d);border:1px solid rgba(239,68,68,.15);border-radius:8px;margin-bottom:.4rem">
-          <div style="font-weight:700;font-size:.82rem;color:var(--red)">Entry ${r.entry}: ${r.name}</div>
-          <div style="font-size:.75rem;color:var(--t2);margin-top:.3rem"><strong>Condition:</strong> ${r.condition}</div>
-          <div style="font-size:.75rem;color:var(--t2)"><strong>Scope:</strong> ${r.scope}</div>
-          <div style="font-size:.75rem;color:var(--t2)"><strong>Exemptions:</strong> ${r.exemptions}</div>
-        </div>`).join('')}</div>`:``}
-
-      ${auth?`<div class="dp-section"><div class="dp-section-title">SVHC / Authorization Status (Annex XIV)</div>
-        <table class="dp-table">
-          <tr><td>Candidate List Date</td><td>${auth.candidateDate}</td></tr>
-          <tr><td>Reason for Inclusion</td><td>${auth.reason}</td></tr>
-          <tr><td>Annex XIV (Authorization List)</td><td>${auth.annexXIV?'<span class="pill pill-red">Listed</span>':'<span class="pill pill-orange">Not yet listed</span>'}</td></tr>
-          ${auth.sunsetDate?`<tr><td>Sunset Date</td><td>${auth.sunsetDate}</td></tr>`:''}
-          ${auth.latestAppDate?`<tr><td>Latest Application Date</td><td>${auth.latestAppDate}</td></tr>`:''}
-          <tr><td>Known Alternatives</td><td>${auth.alternatives.join(', ')}</td></tr>
-          <tr><td>Socio-economic Context</td><td style="font-size:.72rem">${auth.socioEconomic}</td></tr>
-        </table></div>`:``}
-
-      ${transport?`<div class="dp-section"><div class="dp-section-title">Transport Classification (ADR/IMDG/IATA)</div>
-        <table class="dp-table">
-          <tr><td>UN Number</td><td>UN ${transport.un}</td></tr>
-          <tr><td>Proper Shipping Name</td><td>${transport.properShipping}</td></tr>
-          <tr><td>Class</td><td>${transport.class}${transport.subsidiary?' ('+transport.subsidiary+')':''}</td></tr>
-          <tr><td>Packing Group</td><td>${transport.packingGroup}</td></tr>
-          <tr><td>Labels</td><td>${transport.labels.join(', ')}</td></tr>
-          <tr><td>Tunnel Code (ADR)</td><td>${transport.tunnelCode||'—'}</td></tr>
-        </table></div>`:``}
-
-      <div class="dp-section"><div class="dp-section-title">Common Uses</div>
-        <p style="font-size:.82rem;color:var(--t2)">${c.use}</p></div>
-
-      <div class="dp-actions">
-        <button class="btn btn-gold" onclick="switchReachTab('dossier');setTimeout(()=>renderDossierCompleteness('${c.cas}'),50)">📋 Dossier Analysis</button>
-        <button class="btn btn-blue" onclick="switchReachTab('esds');setTimeout(()=>{document.getElementById('sdsSubstance').value='${c.cas}';generateESDS()},50)">📄 Generate eSDS</button>
-        <button class="btn btn-purple" onclick="switchReachTab('iuclid');setTimeout(()=>renderIUCLID('${c.cas}'),50)">💾 IUCLID Export</button>
-        <button class="btn btn-outline" onclick="switchReachTab('submission');setTimeout(()=>renderSubmissionReadiness('${c.cas}'),50)">✅ Submission Check</button>
-        <button class="btn btn-outline" onclick="askCopilot('Analyze the regulatory status of ${c.name} (CAS ${c.cas}) and identify any compliance gaps or upcoming deadlines.')">🤖 Ask AI Copilot</button>
-      </div>
-    </div></div>`;
-  copilotContext={substance:c,auth,dnelData,transport,restrictions};
+  renderStep(workflowState.step);
 }
 
-// ─── DOSSIER COMPLETENESS ────────────────────────────────────────────────
-function renderDossierCompleteness(cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const band=TONNAGE_BANDS[c.tonnageBand];if(!band)return;
-  const dc=c.dossierCompleteness||{};
-  const eps=band.endpoints;
-  const counts={complete:0,waived:0,read_across:0,missing:0,not_required:0};
-  eps.forEach(e=>{const s=dc[e]||'missing';counts[s]=(counts[s]||0)+1});
-  const total=eps.length;
-  const satisfied=counts.complete+counts.waived+counts.not_required+counts.read_across;
-  const pct=Math.round(satisfied/total*100);
-  const missingCost=eps.filter(e=>(dc[e]||'missing')==='missing').reduce((s,e)=>s+(ENDPOINT_META[e]?.cost||0),0);
+function goToStep(i) {
+  workflowState.step = i;
+  renderWorkflow();
+}
 
-  const container=document.getElementById('dossierContent');
-  container.innerHTML=`
+function nextStep() {
+  if (workflowState.step < WORKFLOW_STEPS.length - 1) {
+    workflowState.step++;
+    renderWorkflow();
+  }
+}
+
+function exitWorkflow() {
+  document.getElementById('workflowContainer').style.display = 'none';
+  document.getElementById('searchResults').style.display = '';
+  workflowState.step = 0;
+}
+
+function renderStep(step) {
+  const body = document.getElementById('wfBody');
+  if (!body) return;
+  const renderers = [renderStep1_Identify, renderStep2_Scope, renderStep3_Gaps, renderStep4_Draft, renderStep5_Submit];
+  renderers[step](body);
+}
+
+// ─── STEP 1: SUBSTANCE IDENTIFICATION ───────────────────────────────────
+function renderStep1_Identify(container) {
+  const c = workflowState.substance;
+  const auth = AUTHORIZATION_ENTRIES[c.cas];
+  const restrictions = ANNEX_XVII_RESTRICTIONS.filter(r => r.substances.includes(c.cas));
+  const transport = UN_TRANSPORT[c.cas];
+
+  container.innerHTML = `
+    <div class="wf-step-header">
+      <h3>Step 1: Substance Identification & Verification</h3>
+      <p>Verify substance identity data for IUCLID Section 1. The AI will validate completeness.</p>
+    </div>
+
+    <div class="wf-grid-2">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:.6rem">Substance Identity</div>
+        <table class="dp-table">
+          <tr><td>IUPAC Name</td><td>${c.iupac || c.name}</td></tr>
+          <tr><td>CAS Number</td><td>${c.cas}</td></tr>
+          <tr><td>EC Number</td><td>${c.ecNumber || '—'}</td></tr>
+          <tr><td>Molecular Formula</td><td>${c.formula}</td></tr>
+          <tr><td>Molecular Weight</td><td>${c.mw} g/mol</td></tr>
+          <tr><td>SMILES</td><td style="font-size:.7rem;word-break:break-all">${c.smiles || '—'}</td></tr>
+          <tr><td>InChI</td><td style="font-size:.65rem;word-break:break-all">${c.inchi || '—'}</td></tr>
+          <tr><td>Physical State</td><td>${c.state}</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:.6rem">Registration Status</div>
+        <table class="dp-table">
+          <tr><td>REACH Reg. No.</td><td>${c.reach || '<span class="pill pill-red">Not registered</span>'}</td></tr>
+          <tr><td>Registration Type</td><td>${c.registrationType || '—'}</td></tr>
+          <tr><td>Joint Submission</td><td>${c.jointSubmission ? 'Yes — ' + c.leadRegistrant : 'Individual'}</td></tr>
+          <tr><td>Tonnage Band</td><td>${TONNAGE_BANDS[c.tonnageBand]?.label || c.tonnageBand}</td></tr>
+          <tr><td>SVHC Status</td><td>${c.svhc ? '<span class="pill pill-red">Candidate List</span>' : '<span class="pill pill-green">Not SVHC</span>'}</td></tr>
+          <tr><td>CLP</td><td>${c.harmonisedCLP ? '<span class="pill pill-blue">Harmonised</span> ' + c.clpIndex : '<span class="pill pill-orange">Self-classified</span>'}</td></tr>
+          <tr><td>Signal Word</td><td><strong style="color:${c.signal === 'Danger' ? 'var(--red)' : 'var(--gold)'}">${c.signal}</strong></td></tr>
+          <tr><td>ECHA</td><td><a href="${c.echaUrl || '#'}" target="_blank">View on ECHA →</a></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title" style="margin-bottom:.6rem">CLP Classification</div>
+      <div style="margin-bottom:.5rem">${c.clp.map(cl => {
+        const col = cl.includes('Carc') || cl.includes('Muta') || cl.includes('Repr') ? 'red' : cl.includes('Acute Tox') ? 'red' : cl.includes('Flam') || cl.includes('Ox.') ? 'orange' : cl.includes('Aquatic') ? 'green' : cl.includes('Skin Corr') || cl.includes('Resp. Sens') ? 'purple' : 'gold';
+        return `<span class="pill pill-${col}">${cl}</span>`;
+      }).join('')}</div>
+      <div style="margin-bottom:.4rem">${c.pictograms.map(p => `<span class="pictogram">${GHS_PICTOGRAMS[p]?.icon || ''} ${p}</span>`).join('')}</div>
+      <div style="font-size:.75rem;color:var(--t2);margin-top:.4rem">
+        <strong>H-statements:</strong> ${c.hStatements.map(h => `${h} (${H_STATEMENTS[h] || ''})`).join('; ')}
+      </div>
+    </div>
+
+    ${auth ? `<div class="card wf-alert-card" style="margin-top:.8rem">
+      <div style="font-weight:700;color:var(--red);margin-bottom:.4rem">⚠ SVHC / Authorization Alert</div>
+      <div style="font-size:.78rem;color:var(--t2)">
+        Candidate List since ${auth.candidateDate}. Reason: ${auth.reason}.<br>
+        ${auth.annexXIV ? `<strong>Annex XIV listed</strong> — Sunset: ${auth.sunsetDate}. Authorization required.` : 'Not yet on Annex XIV.'}
+        <br>Alternatives: ${auth.alternatives.join(', ')}
+      </div>
+    </div>` : ''}
+
+    ${restrictions.length ? `<div class="card wf-alert-card" style="margin-top:.8rem;border-color:rgba(249,115,22,.3)">
+      <div style="font-weight:700;color:var(--orange);margin-bottom:.4rem">⚠ Annex XVII Restrictions</div>
+      ${restrictions.map(r => `<div style="font-size:.78rem;color:var(--t2);margin-bottom:.3rem"><strong>Entry ${r.entry}:</strong> ${r.condition}</div>`).join('')}
+    </div>` : ''}
+
+    <div class="wf-actions">
+      <button class="btn btn-purple" onclick="askCopilot('Validate the substance identity for ${c.name} (CAS ${c.cas}). Check if all required IUCLID Section 1 fields are complete. Flag any issues with the identifiers (CAS, EC, SMILES, InChI). Assess if this is a mono-constituent, multi-constituent, or UVCB substance and what additional characterization might be needed.')">🧠 AI: Validate Identity</button>
+      <button class="btn btn-gold" onclick="nextStep()">Continue to Regulatory Scope →</button>
+    </div>`;
+}
+
+// ─── STEP 2: REGULATORY SCOPING ─────────────────────────────────────────
+function renderStep2_Scope(container) {
+  const c = workflowState.substance;
+  const band = TONNAGE_BANDS[c.tonnageBand];
+  const dc = c.dossierCompleteness || {};
+  const eps = band ? band.endpoints : [];
+  const auth = AUTHORIZATION_ENTRIES[c.cas];
+
+  const annexGroups = {};
+  eps.forEach(e => {
+    const meta = ENDPOINT_META[e] || {};
+    const annex = meta.annex || 'Other';
+    if (!annexGroups[annex]) annexGroups[annex] = [];
+    annexGroups[annex].push({ key: e, ...meta, status: dc[e] || 'missing' });
+  });
+
+  const totalCost = eps.reduce((s, e) => s + (ENDPOINT_META[e]?.cost || 0), 0);
+  const missingCost = eps.filter(e => (dc[e] || 'missing') === 'missing').reduce((s, e) => s + (ENDPOINT_META[e]?.cost || 0), 0);
+
+  container.innerHTML = `
+    <div class="wf-step-header">
+      <h3>Step 2: Regulatory Scoping</h3>
+      <p>Determine applicable requirements based on tonnage band, substance properties, and regulatory status.</p>
+    </div>
+
+    <div class="wf-grid-3">
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--gold)">${band?.label || '—'}</div>
+        <div class="wf-metric-label">Tonnage Band</div>
+        <div class="wf-metric-sub">Annex ${band?.annex || '—'}</div>
+      </div>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--blue)">${eps.length}</div>
+        <div class="wf-metric-label">Required Endpoints</div>
+        <div class="wf-metric-sub">€${totalCost.toLocaleString()} total if all tested</div>
+      </div>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--red)">€${band?.regFee?.toLocaleString() || '—'}</div>
+        <div class="wf-metric-label">Registration Fee</div>
+        <div class="wf-metric-sub">Standard (SME discounts available)</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title" style="margin-bottom:.6rem">Your Role in the Registration</div>
+      <div class="wf-role-grid">
+        <div class="wf-role-option ${workflowState.role === 'lead' ? 'selected' : ''}" onclick="setRole('lead')">
+          <div class="wf-role-icon">👑</div>
+          <div class="wf-role-name">Lead Registrant</div>
+          <div class="wf-role-desc">Full dossier responsibility. Submit joint dossier on behalf of co-registrants.</div>
+        </div>
+        <div class="wf-role-option ${workflowState.role === 'member' ? 'selected' : ''}" onclick="setRole('member')">
+          <div class="wf-role-icon">🤝</div>
+          <div class="wf-role-name">Member Registrant</div>
+          <div class="wf-role-desc">Submit own dossier referencing joint data. Letter of Access required.</div>
+        </div>
+        <div class="wf-role-option ${workflowState.role === 'individual' ? 'selected' : ''}" onclick="setRole('individual')">
+          <div class="wf-role-icon">📄</div>
+          <div class="wf-role-name">Individual Registrant</div>
+          <div class="wf-role-desc">Full individual dossier. Opt-out from joint submission (requires justification).</div>
+        </div>
+        <div class="wf-role-option ${workflowState.role === 'only' ? 'selected' : ''}" onclick="setRole('only')">
+          <div class="wf-role-icon">🆕</div>
+          <div class="wf-role-name">Only Registrant</div>
+          <div class="wf-role-desc">First/sole registrant for this substance. Full dossier + inquiry to ECHA.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title" style="margin-bottom:.6rem">Required Information by Annex</div>
+      ${Object.entries(annexGroups).map(([annex, endpoints]) => `
+        <div style="margin-bottom:.8rem">
+          <div style="font-size:.72rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:.4rem">Annex ${annex} (${endpoints.length} endpoints)</div>
+          <div class="endpoint-grid">${endpoints.map(ep => {
+            const statusLabel = { complete: 'Complete', waived: 'Waived', read_across: 'Read-across', missing: 'Missing', not_required: 'N/A' }[ep.status] || ep.status;
+            return `<div class="ep-row">
+              <span class="ep-annex">${ep.iuclidSection || ''}</span>
+              <span class="ep-name">${ep.name || ep.key}</span>
+              <span class="ep-status ep-${ep.status}">${statusLabel}</span>
+              <span class="ep-cost">${ep.status === 'missing' ? '€' + ((ep.cost || 0) / 1000).toFixed(0) + 'K' : ''}</span>
+            </div>`;
+          }).join('')}</div>
+        </div>`).join('')}
+    </div>
+
+    ${auth ? `<div class="card wf-alert-card" style="margin-top:.8rem">
+      <div style="font-weight:700;color:var(--red);margin-bottom:.3rem">⚠ Authorization Implications</div>
+      <div style="font-size:.78rem;color:var(--t2)">${auth.annexXIV ?
+        'This substance is on Annex XIV. Registration alone is not sufficient — you must also apply for authorization or demonstrate an exemption.' :
+        'This substance is on the SVHC Candidate List. Article 33 communication obligations apply. Monitor for potential Annex XIV inclusion.'}</div>
+    </div>` : ''}
+
+    <div class="wf-actions">
+      <button class="btn btn-outline" onclick="goToStep(0)">← Back</button>
+      <button class="btn btn-purple" onclick="askCopilot('For ${c.name} (CAS ${c.cas}) at ${band?.label || ''} tonnage band: 1) Confirm the applicable REACH Annexes and information requirements. 2) Identify any column 2 adaptations that could reduce testing. 3) Estimate the total timeline for completing the registration. 4) Flag any special considerations (SVHC, CMR, PBT). 5) Recommend the optimal registration strategy.')">🧠 AI: Registration Strategy</button>
+      <button class="btn btn-gold" onclick="nextStep()">Continue to Gap Analysis →</button>
+    </div>`;
+}
+
+function setRole(role) {
+  workflowState.role = role;
+  document.querySelectorAll('.wf-role-option').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+// ─── STEP 3: DATA GAP ANALYSIS ──────────────────────────────────────────
+function renderStep3_Gaps(container) {
+  const c = workflowState.substance;
+  const band = TONNAGE_BANDS[c.tonnageBand];
+  const dc = c.dossierCompleteness || {};
+  const eps = band ? band.endpoints : [];
+  const missing = eps.filter(e => (dc[e] || 'missing') === 'missing');
+  const waived = eps.filter(e => dc[e] === 'waived');
+  const readAcrossEps = eps.filter(e => dc[e] === 'read_across');
+  const complete = eps.filter(e => dc[e] === 'complete');
+  const notRequired = eps.filter(e => dc[e] === 'not_required');
+  const satisfied = complete.length + waived.length + notRequired.length + readAcrossEps.length;
+  const pct = eps.length ? Math.round(satisfied / eps.length * 100) : 0;
+  const missingCost = missing.reduce((s, e) => s + (ENDPOINT_META[e]?.cost || 0), 0);
+
+  const groups = READ_ACROSS_GROUPS.filter(g => g.members.includes(c.cas));
+
+  container.innerHTML = `
+    <div class="wf-step-header">
+      <h3>Step 3: Data Gap Analysis & Strategy</h3>
+      <p>AI-powered analysis of each endpoint — with waiver, read-across, and testing recommendations.</p>
+    </div>
+
     <div class="card" style="margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
-        <div><span style="font-size:1.1rem;font-weight:800">${c.name}</span> <span style="font-size:.78rem;color:var(--t3)">— ${band.label} (Annex ${band.annex})</span></div>
-        <span style="font-size:1.5rem;font-weight:800;color:${pct>=90?'var(--green)':pct>=60?'var(--orange)':'var(--red)'}">${pct}%</span>
+        <div><span style="font-size:1.1rem;font-weight:800">${c.name}</span> <span style="font-size:.78rem;color:var(--t3)">— ${band?.label || ''}</span></div>
+        <span style="font-size:1.5rem;font-weight:800;color:${pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--orange)' : 'var(--red)'}">${pct}%</span>
       </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct>=90?'var(--green)':pct>=60?'var(--orange)':'var(--red)'}"></div></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct >= 90 ? 'var(--green)' : pct >= 60 ? 'var(--orange)' : 'var(--red)'}"></div></div>
       <div style="display:flex;gap:1rem;margin-top:.6rem;font-size:.72rem">
-        <span style="color:var(--green)">● ${counts.complete} Complete</span>
-        <span style="color:var(--orange)">● ${counts.waived} Waived</span>
-        <span style="color:var(--blue)">● ${counts.read_across||0} Read-across</span>
-        <span style="color:var(--red)">● ${counts.missing} Missing</span>
-        <span style="color:var(--t3)">● ${counts.not_required} N/A</span>
+        <span style="color:var(--green)">● ${complete.length} Complete</span>
+        <span style="color:var(--orange)">● ${waived.length} Waived</span>
+        <span style="color:var(--blue)">● ${readAcrossEps.length} Read-across</span>
+        <span style="color:var(--red)">● ${missing.length} Missing</span>
+        <span style="color:var(--t3)">● ${notRequired.length} N/A</span>
       </div>
-      ${counts.missing>0?`<div style="margin-top:.6rem;padding:.5rem;background:var(--red-d);border:1px solid rgba(239,68,68,.15);border-radius:8px;font-size:.78rem;color:var(--red)">
-        ⚠ ${counts.missing} endpoint${counts.missing>1?'s':''} missing — estimated cost to fill gaps: <strong>€${missingCost.toLocaleString()}</strong>
-      </div>`:''}
+      ${missing.length > 0 ? `<div style="margin-top:.6rem;padding:.5rem;background:var(--red-d);border:1px solid rgba(239,68,68,.15);border-radius:8px;font-size:.78rem;color:var(--red)">
+        ⚠ ${missing.length} endpoint${missing.length > 1 ? 's' : ''} missing — estimated cost if all tested: <strong>€${missingCost.toLocaleString()}</strong>
+      </div>` : '<div style="margin-top:.6rem;padding:.5rem;background:var(--green-d);border:1px solid rgba(16,185,129,.15);border-radius:8px;font-size:.78rem;color:var(--green)">✓ All endpoints satisfied — dossier is data-complete</div>'}
     </div>
-    <div class="endpoint-grid">${eps.map(e=>{
-      const meta=ENDPOINT_META[e]||{};
-      const status=dc[e]||'missing';
-      const statusLabel={complete:'Complete',waived:'Waived',read_across:'Read-across',missing:'Missing',not_required:'N/A'}[status]||status;
-      return `<div class="ep-row">
-        <span class="ep-annex">${meta.annex||''}</span>
-        <span class="ep-name">${meta.name||e}</span>
-        <span class="ep-status ep-${status}">${statusLabel}</span>
-        <span class="ep-cost">${status==='missing'?'€'+((meta.cost||0)/1000).toFixed(0)+'K':''}</span>
-        <span class="ep-action" title="Ask AI for guidance" onclick="event.stopPropagation();askCopilot('For ${c.name}, provide guidance on the ${meta.name||e} endpoint. Status: ${statusLabel}. What testing strategy, waiver options, or read-across possibilities exist?')">🤖</span>
-      </div>`}).join('')}</div>`;
-}
 
-// ─── EXPOSURE SCENARIOS ──────────────────────────────────────────────────
-function renderExposureScenarios(cas){
-  const scenarios=EXPOSURE_SCENARIOS[cas];
-  const container=document.getElementById('exposureContent');
-  if(!scenarios||!scenarios.length){container.innerHTML='<div class="empty" style="padding:2rem;text-align:center;color:var(--t3)">No exposure scenarios available for this substance in the demo database.<br><button class="btn btn-purple btn-sm" style="margin-top:.5rem" onclick="askCopilot(\'Generate exposure scenario structure for '+cas+'\')">🤖 Ask AI to draft ES</button></div>';return}
-  container.innerHTML=scenarios.map((es,i)=>`<div class="es-card" onclick="this.classList.toggle('open')">
-    <div class="es-header"><div class="es-title">${es.esTitle}</div><div style="display:flex;align-items:center;gap:.5rem"><span class="pill pill-blue">${es.procCat}</span><span class="pill pill-green">${es.envRelCat}</span><span class="es-chevron">▸</span></div></div>
-    <div class="es-body">
-      <div style="font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin-bottom:.5rem">Contributing Scenarios — Worker Exposure</div>
-      ${es.contribScenarios.map(cs=>`<div class="cs-row">
-        <div class="cs-title">${cs.name}</div>
-        <table class="dp-table" style="margin:.3rem 0">
-          <tr><td>PROC</td><td>${cs.proc}</td></tr>
-          <tr><td>Duration / Frequency</td><td>${cs.duration}, ${cs.frequency}</td></tr>
-          <tr><td>Concentration</td><td>${cs.concentration}</td></tr>
-          <tr><td>PPE</td><td>${cs.ppe}</td></tr>
-          <tr><td>LEV / Engineering Controls</td><td>${cs.lev}</td></tr>
-        </table>
-        <div style="font-size:.72rem;font-weight:600;color:var(--t3);margin-top:.4rem">Risk Characterisation Ratios (RCR):</div>
-        <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">Inhalation</span><div class="rcr-track"><div class="rcr-fill" style="width:${cs.rcrWorkerInhal*100}%;background:${cs.rcrWorkerInhal<0.5?'var(--green)':cs.rcrWorkerInhal<0.8?'var(--orange)':'var(--red)'}"></div></div><span class="rcr-val" style="color:${cs.rcrWorkerInhal<1?'var(--green)':'var(--red)'}">${cs.rcrWorkerInhal.toFixed(2)}</span></div>
-        <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">Dermal</span><div class="rcr-track"><div class="rcr-fill" style="width:${cs.rcrWorkerDermal*100}%;background:${cs.rcrWorkerDermal<0.5?'var(--green)':cs.rcrWorkerDermal<0.8?'var(--orange)':'var(--red)'}"></div></div><span class="rcr-val" style="color:${cs.rcrWorkerDermal<1?'var(--green)':'var(--red)'}">${cs.rcrWorkerDermal.toFixed(2)}</span></div>
+    ${missing.length > 0 ? `
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title" style="margin-bottom:.6rem;color:var(--red)">Missing Endpoints — Action Required</div>
+      <div class="endpoint-grid">${missing.map(e => {
+        const meta = ENDPOINT_META[e] || {};
+        const guidance = AI_COPILOT_RULES.dossierGaps[e] || '';
+        return `<div class="ep-row ep-row-expandable" onclick="this.classList.toggle('expanded')">
+          <div style="display:flex;align-items:center;gap:.6rem;flex:1">
+            <span class="ep-annex">${meta.annex || ''}</span>
+            <div style="flex:1">
+              <div class="ep-name">${meta.name || e}</div>
+              <div class="ep-guidance">${meta.guideline || ''} · IUCLID ${meta.iuclidSection || ''} · ${meta.waivable ? 'Waiver possible' : 'No standard waiver'}</div>
+            </div>
+            <span class="ep-cost">€${((meta.cost || 0) / 1000).toFixed(0)}K</span>
+            <button class="btn btn-purple btn-sm" onclick="event.stopPropagation();askCopilot('For ${c.name}: Provide a detailed strategy for the ${meta.name || e} endpoint (${meta.annex}, ${meta.guideline}). Consider: 1) Is a waiver possible under Annex XI? Which section? 2) Can read-across be used? From which analogues? 3) Are there QSAR models available? 4) What is the minimum testing needed? 5) Draft the IUCLID justification text if a waiver is recommended. 6) Estimated cost and timeline.')">🧠 AI Strategy</button>
+          </div>
+          <div class="ep-expanded-content">
+            <div style="font-size:.75rem;color:var(--t2);line-height:1.6;padding:.5rem 0">${guidance}</div>
+          </div>
+        </div>`;
+      }).join('')}</div>
+    </div>` : ''}
+
+    ${groups.length > 0 ? `
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title" style="margin-bottom:.6rem">Available Read-Across Groups</div>
+      ${groups.map(g => `<div style="padding:.6rem;background:var(--s2);border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem">
+        <div style="font-weight:600;font-size:.85rem;margin-bottom:.3rem">${g.groupName} <span class="pill pill-${g.confidence === 'High' ? 'green' : g.confidence === 'Medium' ? 'orange' : 'red'}">${g.confidence}</span></div>
+        <div style="font-size:.75rem;color:var(--t2);margin-bottom:.3rem">${g.justification.substring(0, 150)}...</div>
+        <div style="font-size:.72rem">Endpoints: ${g.endpoints.map(e => `<span class="pill pill-blue">${ENDPOINT_META[e]?.name || e}</span>`).join('')}</div>
       </div>`).join('')}
-      <div style="font-size:.72rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:1px;margin:.8rem 0 .4rem">Environmental Release — RCRs</div>
-      <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">Freshwater</span><div class="rcr-track"><div class="rcr-fill" style="width:${es.envRcr.rcrFreshwater*100}%;background:${es.envRcr.rcrFreshwater<1?'var(--green)':'var(--red)'}"></div></div><span class="rcr-val">${es.envRcr.rcrFreshwater.toFixed(2)}</span></div>
-      <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">Marine</span><div class="rcr-track"><div class="rcr-fill" style="width:${es.envRcr.rcrMarine*100}%;background:${es.envRcr.rcrMarine<1?'var(--green)':'var(--red)'}"></div></div><span class="rcr-val">${es.envRcr.rcrMarine.toFixed(2)}</span></div>
-      <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">STP</span><div class="rcr-track"><div class="rcr-fill" style="width:${es.envRcr.rcrSTP*100}%;background:${es.envRcr.rcrSTP<1?'var(--green)':'var(--red)'}"></div></div><span class="rcr-val">${es.envRcr.rcrSTP.toFixed(2)}</span></div>
-      <div class="rcr-bar"><span style="font-size:.7rem;color:var(--t2);width:80px">Soil</span><div class="rcr-track"><div class="rcr-fill" style="width:${es.envRcr.rcrSoil*100}%;background:${es.envRcr.rcrSoil<1?'var(--green)':'var(--red)'}"></div></div><span class="rcr-val">${es.envRcr.rcrSoil.toFixed(2)}</span></div>
-    </div></div>`).join('');
+    </div>` : ''}
+
+    <div class="wf-actions">
+      <button class="btn btn-outline" onclick="goToStep(1)">← Back</button>
+      <button class="btn btn-purple" onclick="askCopilot('For ${c.name} (CAS ${c.cas}), perform a comprehensive gap analysis. For each missing endpoint, recommend the optimal strategy (test, waive, read-across, QSAR). Prioritize cost savings. Calculate the total optimized budget vs full testing budget. Provide a timeline estimate. Draft any waiver justification texts that could be used directly in IUCLID.')">🧠 AI: Full Gap Analysis</button>
+      <button class="btn btn-gold" onclick="nextStep()">Continue to Dossier Drafting →</button>
+    </div>`;
 }
 
-// ─── READ-ACROSS ─────────────────────────────────────────────────────────
-function renderReadAcross(cas){
-  const groups=READ_ACROSS_GROUPS.filter(g=>g.members.includes(cas));
-  const container=document.getElementById('readAcrossContent');
-  if(!groups.length){container.innerHTML='<div class="empty" style="padding:2rem;text-align:center;color:var(--t3)">No read-across groups defined for this substance.<br><button class="btn btn-purple btn-sm" style="margin-top:.5rem" onclick="askCopilot(\'Identify potential read-across analogues for CAS '+cas+' based on structural similarity and metabolic pathways.\')">🤖 Ask AI to find analogues</button></div>';return}
-  container.innerHTML=groups.map(g=>{
-    const members=g.members.map(m=>{const s=CHEMICALS_DB.find(x=>x.cas===m);return s?`<span class="pill pill-${m===cas?'gold':'blue'}">${s.name} (${m})</span>`:`<span class="pill pill-blue">${m}</span>`}).join('');
-    return `<div class="card" style="margin-bottom:.8rem">
-      <div style="font-weight:700;font-size:.95rem;margin-bottom:.5rem">${g.groupName}</div>
-      <div style="margin-bottom:.5rem">${members}</div>
-      <div style="font-size:.72rem;font-weight:600;color:var(--t3);text-transform:uppercase;margin-bottom:.3rem">RAAF Justification</div>
-      <div style="font-size:.78rem;color:var(--t2);margin-bottom:.5rem;line-height:1.6">${g.justification}</div>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">
-        <span style="font-size:.7rem;font-weight:600;color:var(--t3)">Applicable endpoints:</span>
-        ${g.endpoints.map(e=>`<span class="pill pill-green">${ENDPOINT_META[e]?.name||e}</span>`).join('')}
+// ─── STEP 4: AI DOSSIER DRAFTING ────────────────────────────────────────
+function renderStep4_Draft(container) {
+  const c = workflowState.substance;
+  const band = TONNAGE_BANDS[c.tonnageBand];
+  const scenarios = EXPOSURE_SCENARIOS[c.cas];
+  const dnelData = DNEL_PNEC[c.cas];
+
+  container.innerHTML = `
+    <div class="wf-step-header">
+      <h3>Step 4: AI Dossier Drafting</h3>
+      <p>Generate regulatory documents using 3Worlds AI. Each document is a professional draft ready for expert review.</p>
+    </div>
+
+    <div class="wf-doc-grid">
+      <div class="wf-doc-card" onclick="generateDoc('csr')">
+        <div class="wf-doc-icon">📊</div>
+        <div class="wf-doc-title">Chemical Safety Report</div>
+        <div class="wf-doc-desc">AI-drafted CSR with hazard assessment, exposure assessment, and risk characterisation.</div>
+        <span class="pill pill-gold">AI Generated</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span class="pill pill-${g.confidence==='High'?'green':g.confidence==='Medium'?'orange':'red'}">Confidence: ${g.confidence}</span>
-        <span style="font-size:.72rem;color:var(--t3)">${g.regulatoryPrecedent}</span>
+
+      <div class="wf-doc-card" onclick="generateDoc('esds')">
+        <div class="wf-doc-icon">📄</div>
+        <div class="wf-doc-title">Extended Safety Data Sheet</div>
+        <div class="wf-doc-desc">Full 16-section eSDS per Regulation (EU) 2020/878 with exposure scenarios.</div>
+        <span class="pill pill-gold">AI Generated</span>
       </div>
-    </div>`}).join('');
+
+      <div class="wf-doc-card" onclick="generateDoc('iuclid')">
+        <div class="wf-doc-icon">💾</div>
+        <div class="wf-doc-title">IUCLID XML Files</div>
+        <div class="wf-doc-desc">Section 1 (Identity), CLP, PhysChem, CSR Summary — ready for IUCLID import.</div>
+        <span class="pill pill-blue">XML Export</span>
+      </div>
+
+      <div class="wf-doc-card" onclick="generateDoc('waiver')">
+        <div class="wf-doc-icon">📝</div>
+        <div class="wf-doc-title">Waiver Justifications</div>
+        <div class="wf-doc-desc">AI-drafted Annex XI justification texts for waived endpoints.</div>
+        <span class="pill pill-gold">AI Generated</span>
+      </div>
+
+      <div class="wf-doc-card" onclick="generateDoc('readacross')">
+        <div class="wf-doc-icon">🔗</div>
+        <div class="wf-doc-title">Read-Across Justification</div>
+        <div class="wf-doc-desc">RAAF-compliant read-across report with data matrix and hypothesis.</div>
+        <span class="pill pill-gold">AI Generated</span>
+      </div>
+
+      <div class="wf-doc-card" onclick="generateDoc('exposure')">
+        <div class="wf-doc-icon">🏭</div>
+        <div class="wf-doc-title">Exposure Scenarios</div>
+        <div class="wf-doc-desc">Contributing scenarios with OCs, RMMs, and RCR calculations.</div>
+        <span class="pill pill-gold">AI Generated</span>
+      </div>
+
+      <div class="wf-doc-card" onclick="generateDoc('robust')">
+        <div class="wf-doc-icon">🔬</div>
+        <div class="wf-doc-title">Robust Study Summaries</div>
+        <div class="wf-doc-desc">AI-drafted RSS templates for key endpoint study records.</div>
+        <span class="pill pill-gold">AI Generated</span>
+      </div>
+
+      <div class="wf-doc-card" onclick="generateDoc('inquiry')">
+        <div class="wf-doc-icon">📨</div>
+        <div class="wf-doc-title">ECHA Inquiry Letter</div>
+        <div class="wf-doc-desc">Pre-registration inquiry to ECHA for data sharing (Article 26).</div>
+        <span class="pill pill-gold">AI Generated</span>
+      </div>
+    </div>
+
+    <div id="docPreviewArea" style="margin-top:1rem"></div>
+
+    <div class="wf-actions">
+      <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
+      <button class="btn btn-purple" onclick="askCopilot('For ${c.name} (CAS ${c.cas}), generate a complete Chemical Safety Report (CSR) outline following ECHA Guidance on Information Requirements (Chapter R). Include: Part A (risk management measures summary), Part B (hazard assessment for each endpoint with available data, exposure assessment with DNELs/PNECs, risk characterisation). Make it detailed and regulatory-quality.')">🧠 AI: Draft Full CSR</button>
+      <button class="btn btn-gold" onclick="nextStep()">Continue to Submission →</button>
+    </div>`;
 }
 
-// ─── IUCLID XML EXPORT ───────────────────────────────────────────────────
-function renderIUCLID(cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const container=document.getElementById('iuclidContent');
-  const templates=[
-    {name:'Substance Identity (Section 1)',fn:IUCLID_XML_TEMPLATES.substanceIdentity},
-    {name:'CLP Notification',fn:IUCLID_XML_TEMPLATES.clpNotification},
-    {name:'Physical-Chemical Properties (Section 4)',fn:IUCLID_XML_TEMPLATES.physChemEndpoint},
-    {name:'Chemical Safety Report Summary',fn:IUCLID_XML_TEMPLATES.csrSummary}
+function generateDoc(type) {
+  const c = workflowState.substance;
+  const prompts = {
+    csr: `Generate a detailed Chemical Safety Report (CSR) for ${c.name} (CAS ${c.cas}). Structure it per ECHA guidance: 1) Substance identity, 2) Hazard classification summary, 3) Environmental hazard assessment (PNECs), 4) Human health hazard assessment (DNELs), 5) Exposure assessment summary, 6) Risk characterisation. Use the substance data I provided. Make it professional regulatory quality.`,
+    esds: `Generate the key sections of an extended Safety Data Sheet for ${c.name} (CAS ${c.cas}) per Regulation (EU) 2020/878. Focus on Sections 1-3, 8, 11, 14, and 15 with substance-specific content. Include proper regulatory references.`,
+    iuclid: 'iuclid_export',
+    waiver: `For ${c.name} (CAS ${c.cas}), draft Annex XI waiver justification texts for all waived endpoints. For each waiver, provide: 1) Legal basis (specific Annex XI section), 2) Scientific justification (why testing is not needed), 3) Supporting evidence, 4) Conclusion. Format each as a standalone text that could be pasted into IUCLID.`,
+    readacross: `For ${c.name} (CAS ${c.cas}), draft a RAAF-compliant read-across justification. Include: 1) Hypothesis (which RAAF scenario applies), 2) Source and target substance identification, 3) Structural similarity assessment, 4) Mechanistic plausibility, 5) Data matrix showing available data, 6) Uncertainty analysis, 7) Conclusion on acceptability.`,
+    exposure: `For ${c.name} (CAS ${c.cas}), draft exposure scenarios for the main identified uses. For each scenario include: 1) Title and use descriptor, 2) Contributing scenarios with PROC/ERC, 3) Operational conditions (duration, frequency, concentration), 4) Risk management measures (PPE, LEV), 5) Exposure estimates, 6) RCR calculations. Use ECETOC TRA methodology.`,
+    robust: `For ${c.name} (CAS ${c.cas}), draft robust study summary templates for the key toxicological endpoints (acute toxicity, skin irritation, eye irritation, skin sensitisation, mutagenicity). For each, include: Administrative data (guideline, GLP, reliability), Materials and methods, Results, Applicant's summary and conclusion. Format per IUCLID requirements.`,
+    inquiry: `Draft an ECHA pre-registration inquiry letter for ${c.name} (CAS ${c.cas}) under Article 26 of REACH. Include: 1) Substance identity, 2) Tonnage band, 3) Request for existing registrant data, 4) Willingness to share costs, 5) Contact details placeholder. Make it formal and ready to submit.`
+  };
+
+  if (type === 'iuclid') {
+    renderIUCLIDExport(c);
+    return;
+  }
+
+  askCopilot(prompts[type]);
+}
+
+function renderIUCLIDExport(c) {
+  const area = document.getElementById('docPreviewArea');
+  const templates = [
+    { name: 'Substance Identity (Section 1)', fn: IUCLID_XML_TEMPLATES.substanceIdentity },
+    { name: 'CLP Notification', fn: IUCLID_XML_TEMPLATES.clpNotification },
+    { name: 'Physical-Chemical Properties (Section 4)', fn: IUCLID_XML_TEMPLATES.physChemEndpoint },
+    { name: 'Chemical Safety Report Summary', fn: IUCLID_XML_TEMPLATES.csrSummary }
   ];
-  container.innerHTML=`<div class="card" style="margin-bottom:1rem">
-    <div style="font-weight:700;font-size:.95rem;margin-bottom:.3rem">IUCLID 6 Export — ${c.name}</div>
-    <div style="font-size:.78rem;color:var(--t2);margin-bottom:.8rem">Generate XML fragments compatible with IUCLID 6 for import into your dossier. These are draft templates — review before submission to ECHA.</div>
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap">${templates.map((t,i)=>`<button class="btn btn-outline btn-sm" onclick="showXmlPreview(${i},'${cas}')">${t.name}</button>`).join('')}
-    <button class="btn btn-gold btn-sm" onclick="downloadAllXml('${cas}')">💾 Download All XML</button></div>
-  </div><div id="xmlPreviewArea"></div>`;
+
+  area.innerHTML = `<div class="card">
+    <div class="card-title" style="margin-bottom:.6rem">IUCLID 6 XML Export — ${c.name}</div>
+    <div style="font-size:.78rem;color:var(--t2);margin-bottom:.8rem">These XML fragments are compatible with IUCLID 6 for import into your dossier.</div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      ${templates.map((t, i) => `<button class="btn btn-outline btn-sm" onclick="showXmlPreview(${i},'${c.cas}')">${t.name}</button>`).join('')}
+      <button class="btn btn-gold btn-sm" onclick="downloadAllXml('${c.cas}')">💾 Download All</button>
+    </div>
+    <div id="xmlPreviewArea" style="margin-top:.8rem"></div>
+  </div>`;
 }
 
-function showXmlPreview(idx,cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const templates=[IUCLID_XML_TEMPLATES.substanceIdentity,IUCLID_XML_TEMPLATES.clpNotification,IUCLID_XML_TEMPLATES.physChemEndpoint,IUCLID_XML_TEMPLATES.csrSummary];
-  const names=['substance-identity','clp-notification','physchem-endpoint','csr-summary'];
-  const xml=templates[idx](c);
-  const highlighted=xml.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/(&lt;\/?[\w:]+)/g,'<span class="tag">$1</span>').replace(/([\w:-]+)=/g,'<span class="attr">$1</span>=').replace(/"([^"]*)"/g,'"<span class="val">$1</span>"');
-  document.getElementById('xmlPreviewArea').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+// kept from original for XML functionality
+function showXmlPreview(idx, cas) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas); if (!c) return;
+  const templates = [IUCLID_XML_TEMPLATES.substanceIdentity, IUCLID_XML_TEMPLATES.clpNotification, IUCLID_XML_TEMPLATES.physChemEndpoint, IUCLID_XML_TEMPLATES.csrSummary];
+  const names = ['substance-identity', 'clp-notification', 'physchem-endpoint', 'csr-summary'];
+  const xml = templates[idx](c);
+  const highlighted = xml.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(&lt;\/?[\w:]+)/g, '<span class="tag">$1</span>').replace(/([\w:-]+)=/g, '<span class="attr">$1</span>=').replace(/"([^"]*)"/g, '"<span class="val">$1</span>"');
+  document.getElementById('xmlPreviewArea').innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
     <span style="font-size:.82rem;font-weight:600">${names[idx]}.xml</span>
     <button class="btn btn-sm btn-outline" onclick="downloadXml('${names[idx]}','${cas}',${idx})">⬇ Download</button>
   </div><div class="xml-preview">${highlighted}</div>`;
 }
 
-function downloadXml(name,cas,idx){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const templates=[IUCLID_XML_TEMPLATES.substanceIdentity,IUCLID_XML_TEMPLATES.clpNotification,IUCLID_XML_TEMPLATES.physChemEndpoint,IUCLID_XML_TEMPLATES.csrSummary];
-  const xml=templates[idx](c);
-  const blob=new Blob([xml],{type:'application/xml'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${name}_${cas}.xml`;a.click();
+function downloadXml(name, cas, idx) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas); if (!c) return;
+  const templates = [IUCLID_XML_TEMPLATES.substanceIdentity, IUCLID_XML_TEMPLATES.clpNotification, IUCLID_XML_TEMPLATES.physChemEndpoint, IUCLID_XML_TEMPLATES.csrSummary];
+  const xml = templates[idx](c);
+  const blob = new Blob([xml], { type: 'application/xml' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${name}_${cas}.xml`; a.click();
 }
 
-function downloadAllXml(cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const templates=[IUCLID_XML_TEMPLATES.substanceIdentity,IUCLID_XML_TEMPLATES.clpNotification,IUCLID_XML_TEMPLATES.physChemEndpoint,IUCLID_XML_TEMPLATES.csrSummary];
-  const names=['substance-identity','clp-notification','physchem-endpoint','csr-summary'];
-  templates.forEach((fn,i)=>{
-    const xml=fn(c);const blob=new Blob([xml],{type:'application/xml'});
-    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${names[i]}_${cas}.xml`;
-    setTimeout(()=>a.click(),i*300);
+function downloadAllXml(cas) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas); if (!c) return;
+  const templates = [IUCLID_XML_TEMPLATES.substanceIdentity, IUCLID_XML_TEMPLATES.clpNotification, IUCLID_XML_TEMPLATES.physChemEndpoint, IUCLID_XML_TEMPLATES.csrSummary];
+  const names = ['substance-identity', 'clp-notification', 'physchem-endpoint', 'csr-summary'];
+  templates.forEach((fn, i) => {
+    const xml = fn(c); const blob = new Blob([xml], { type: 'application/xml' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${names[i]}_${cas}.xml`;
+    setTimeout(() => a.click(), i * 300);
   });
 }
 
-// ─── SUBMISSION READINESS ────────────────────────────────────────────────
-function renderSubmissionReadiness(cas){
-  const c=CHEMICALS_DB.find(x=>x.cas===cas);if(!c)return;
-  const band=TONNAGE_BANDS[c.tonnageBand];
-  const dc=c.dossierCompleteness||{};
-  const eps=band?band.endpoints:[];
-  const missing=eps.filter(e=>(dc[e]||'missing')==='missing');
-  const auth=AUTHORIZATION_ENTRIES[cas];
-  const restrictions=ANNEX_XVII_RESTRICTIONS.filter(r=>r.substances.includes(cas));
+// ─── STEP 5: SUBMISSION PREPARATION ─────────────────────────────────────
+function renderStep5_Submit(container) {
+  const c = workflowState.substance;
+  const band = TONNAGE_BANDS[c.tonnageBand];
+  const dc = c.dossierCompleteness || {};
+  const eps = band ? band.endpoints : [];
+  const missing = eps.filter(e => (dc[e] || 'missing') === 'missing');
+  const auth = AUTHORIZATION_ENTRIES[c.cas];
+  const restrictions = ANNEX_XVII_RESTRICTIONS.filter(r => r.substances.includes(c.cas));
 
-  const checks=[
-    {label:'Substance identity complete (IUPAC, CAS, EC, SMILES, InChI)',pass:!!(c.iupac&&c.cas&&c.ecNumber&&c.smiles),detail:'IUCLID Section 1'},
-    {label:'CLP classification assigned',pass:c.clp&&c.clp.length>0,detail:c.harmonisedCLP?'Harmonised entry — Index '+c.clpIndex:'Self-classification'},
-    {label:'REACH registration number assigned',pass:!!c.reach,detail:c.reach||'Not yet registered'},
-    {label:`Tonnage band declared (${band?band.label:'—'})`,pass:!!c.tonnageBand,detail:`Annex ${band?band.annex:'—'} requirements apply`},
-    {label:`All ${eps.length} required endpoints satisfied`,pass:missing.length===0,warn:missing.length>0&&missing.length<=3,detail:missing.length?`${missing.length} missing: ${missing.map(e=>ENDPOINT_META[e]?.name||e).join(', ')}`:'All endpoints complete, waived, or covered by read-across'},
-    {label:'Chemical Safety Report (CSR) prepared',pass:!!c.csr,detail:c.csr?'CSR included in dossier':'CSR required for ≥10 t/y'},
-    {label:'Exposure assessment conducted',pass:!!c.exposureAssessment,detail:c.exposureAssessment?'Exposure scenarios documented':'Required if classified as hazardous'},
-    {label:'SVHC / Authorization status checked',pass:true,warn:!!auth,detail:auth?`SVHC since ${auth.candidateDate} — ${auth.reason}`:'Not on SVHC candidate list'},
-    {label:'Annex XVII restriction compliance verified',pass:true,warn:restrictions.length>0,detail:restrictions.length?`${restrictions.length} restriction(s) apply — review conditions`:'No applicable restrictions'},
-    {label:'Joint submission alignment confirmed',pass:!!c.jointSubmission,detail:c.jointSubmission?`Lead registrant: ${c.leadRegistrant}`:'Individual submission'},
-    {label:'Registration fee calculated',pass:true,detail:band?`Standard fee: €${band.regFee.toLocaleString()}`:'—'}
+  const checks = [
+    { label: 'Substance identity complete (IUPAC, CAS, EC, SMILES, InChI)', pass: !!(c.iupac && c.cas && c.ecNumber && c.smiles), detail: 'IUCLID Section 1', critical: true },
+    { label: 'CLP classification assigned', pass: c.clp && c.clp.length > 0, detail: c.harmonisedCLP ? 'Harmonised — Index ' + c.clpIndex : 'Self-classification', critical: true },
+    { label: 'REACH registration number', pass: !!c.reach, detail: c.reach || 'Required — submit via REACH-IT', critical: false },
+    { label: `Tonnage band declared (${band ? band.label : '—'})`, pass: !!c.tonnageBand, detail: `Annex ${band ? band.annex : '—'}`, critical: true },
+    { label: `All ${eps.length} required endpoints satisfied`, pass: missing.length === 0, warn: missing.length > 0 && missing.length <= 3, detail: missing.length ? `${missing.length} missing: ${missing.map(e => ENDPOINT_META[e]?.name || e).join(', ')}` : 'All endpoints complete', critical: true },
+    { label: 'Chemical Safety Report (CSR)', pass: !!c.csr, detail: c.csr ? 'CSR prepared' : 'Required for ≥10 t/y', critical: true },
+    { label: 'Exposure assessment', pass: !!c.exposureAssessment, detail: c.exposureAssessment ? 'Exposure scenarios documented' : 'Required if classified hazardous', critical: true },
+    { label: 'SVHC / Authorization check', pass: true, warn: !!auth, detail: auth ? `SVHC since ${auth.candidateDate}` : 'Not SVHC', critical: false },
+    { label: 'Annex XVII restriction compliance', pass: true, warn: restrictions.length > 0, detail: restrictions.length ? `${restrictions.length} restriction(s) apply` : 'No restrictions', critical: false },
+    { label: 'Joint submission alignment', pass: !!c.jointSubmission, detail: c.jointSubmission ? `Lead: ${c.leadRegistrant}` : 'Individual', critical: false },
+    { label: 'Registration fee', pass: true, detail: band ? `€${band.regFee.toLocaleString()} (standard)` : '—', critical: false },
+    { label: 'IUCLID Validation Assistant', pass: false, detail: 'Run validation in IUCLID before submission', critical: true },
+    { label: 'ECHA Dossier Quality Check', pass: false, detail: 'Recommended before submission to REACH-IT', critical: false }
   ];
 
-  const passCount=checks.filter(ch=>ch.pass&&!ch.warn).length;
-  const warnCount=checks.filter(ch=>ch.warn).length;
-  const failCount=checks.filter(ch=>!ch.pass).length;
+  const passCount = checks.filter(ch => ch.pass && !ch.warn).length;
+  const warnCount = checks.filter(ch => ch.warn).length;
+  const failCount = checks.filter(ch => !ch.pass).length;
+  const readiness = Math.round(passCount / checks.length * 100);
 
-  const container=document.getElementById('submissionContent');
-  container.innerHTML=`<div class="card" style="margin-bottom:1rem">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><span style="font-size:1.1rem;font-weight:800">${c.name}</span> <span style="font-size:.78rem;color:var(--t3)">— Submission Readiness</span></div>
-      <div style="display:flex;gap:.5rem"><span class="pill pill-green">${passCount} Pass</span><span class="pill pill-orange">${warnCount} Warning</span><span class="pill pill-red">${failCount} Fail</span></div>
+  container.innerHTML = `
+    <div class="wf-step-header">
+      <h3>Step 5: Submission Preparation</h3>
+      <p>Final checklist before submitting to ECHA via REACH-IT. AI can generate a complete submission readiness report.</p>
     </div>
-  </div>
-  <div class="checklist">${checks.map(ch=>`<div class="check-item">
-    <div class="check-icon ${ch.pass?(ch.warn?'check-warn':'check-pass'):'check-fail'}">${ch.pass?(ch.warn?'⚠':'✓'):'✕'}</div>
-    <div><div class="check-text">${ch.label}</div><div class="check-detail">${ch.detail}</div></div>
-  </div>`).join('')}</div>
-  <div style="margin-top:1rem;display:flex;gap:.4rem">
-    <button class="btn btn-purple" onclick="askCopilot('Generate a complete submission readiness report for ${c.name} (CAS ${c.cas}), tonnage band ${c.tonnageBand}. List all blocking issues and recommended actions.')">🤖 AI Readiness Report</button>
-    <button class="btn btn-outline" onclick="switchReachTab('iuclid');setTimeout(()=>renderIUCLID('${cas}'),50)">💾 Export IUCLID Files</button>
-  </div>`;
+
+    <div class="wf-grid-3">
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:${readiness >= 80 ? 'var(--green)' : readiness >= 50 ? 'var(--orange)' : 'var(--red)'}">${readiness}%</div>
+        <div class="wf-metric-label">Submission Readiness</div>
+        <div class="wf-metric-sub">${passCount} pass · ${warnCount} warn · ${failCount} fail</div>
+      </div>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--gold)">€${band?.regFee?.toLocaleString() || '—'}</div>
+        <div class="wf-metric-label">Registration Fee</div>
+        <div class="wf-metric-sub">SME: 50-95% discount</div>
+      </div>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--blue)">${c.registrationType || 'Standard'}</div>
+        <div class="wf-metric-label">Registration Type</div>
+        <div class="wf-metric-sub">${c.jointSubmission ? 'Joint submission' : 'Individual'}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title" style="margin-bottom:.6rem">Pre-Submission Checklist</div>
+      <div class="checklist">${checks.map(ch => `<div class="check-item ${ch.critical ? 'critical' : ''}">
+        <div class="check-icon ${ch.pass ? (ch.warn ? 'check-warn' : 'check-pass') : 'check-fail'}">${ch.pass ? (ch.warn ? '⚠' : '✓') : '✕'}</div>
+        <div style="flex:1"><div class="check-text">${ch.label}${ch.critical ? ' <span style="color:var(--red);font-size:.6rem;font-weight:700">BLOCKING</span>' : ''}</div><div class="check-detail">${ch.detail}</div></div>
+      </div>`).join('')}</div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title" style="margin-bottom:.6rem">Submission Workflow</div>
+      <div class="wf-submission-steps">
+        <div class="wf-sub-step"><span class="wf-sub-num">1</span><div><strong>Complete IUCLID dossier</strong><div class="wf-sub-desc">All sections populated, endpoint study records attached</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">2</span><div><strong>Run IUCLID Validation Assistant</strong><div class="wf-sub-desc">Fix all errors, review warnings</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">3</span><div><strong>Run ECHA Dossier Quality Check</strong><div class="wf-sub-desc">Optional but recommended — identifies common deficiencies</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">4</span><div><strong>Export dossier from IUCLID</strong><div class="wf-sub-desc">Create .i6z file for REACH-IT upload</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">5</span><div><strong>Submit via REACH-IT</strong><div class="wf-sub-desc">Upload dossier, pay fee, receive submission number</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">6</span><div><strong>Completeness check (3 weeks)</strong><div class="wf-sub-desc">ECHA verifies all required information is present</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">7</span><div><strong>Technical completeness check</strong><div class="wf-sub-desc">ECHA may request additional information</div></div></div>
+        <div class="wf-sub-step"><span class="wf-sub-num">8</span><div><strong>Registration number issued</strong><div class="wf-sub-desc">Substance can be manufactured/imported in the EU</div></div></div>
+      </div>
+    </div>
+
+    <div class="wf-actions">
+      <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
+      <button class="btn btn-purple" onclick="askCopilot('Generate a complete submission readiness report for ${c.name} (CAS ${c.cas}). For each checklist item that is not passing, provide: 1) What exactly is needed, 2) How to fix it, 3) Estimated time to resolve. Then provide an overall assessment: Is this dossier ready for submission? What are the blocking issues? What is the recommended timeline to submission?')">🧠 AI: Readiness Report</button>
+      <button class="btn btn-gold" onclick="downloadAllXml('${c.cas}')">💾 Download All IUCLID Files</button>
+    </div>`;
 }
+
+// Legacy functions for backward compatibility with tab-based navigation
+function renderDossierCompleteness(cas) { startWorkflow(cas); goToStep(2); }
+function renderExposureScenarios(cas) {
+  startWorkflow(cas);
+  askCopilot(`Show me the exposure scenarios for ${CHEMICALS_DB.find(x=>x.cas===cas)?.name || cas}. Include contributing scenarios, PROCs, operational conditions, RMMs, and RCR calculations.`);
+}
+function renderReadAcross(cas) {
+  startWorkflow(cas);
+  askCopilot(`Analyze read-across options for ${CHEMICALS_DB.find(x=>x.cas===cas)?.name || cas}. Identify analogue groups, assess RAAF compliance, and recommend which endpoints can be covered.`);
+}
+function renderIUCLID(cas) { startWorkflow(cas); goToStep(3); }
+function renderSubmissionReadiness(cas) { startWorkflow(cas); goToStep(4); }

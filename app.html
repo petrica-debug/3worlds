@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chemical Intelligence Platform — Three Worlds</title>
-<meta name="description" content="AI-powered REACH compliance, CLP classification, IUCLID dossier generation, and hydrogen project intelligence.">
+<title>REACH Registration Platform — Powered by 3Worlds AI</title>
+<meta name="description" content="AI-powered REACH registration workflow. Guided substance registration with real AI intelligence for dossier preparation, gap analysis, and submission.">
 <link rel="icon" type="image/svg+xml" href="assets/favicons/favicon.svg">
 <link rel="stylesheet" href="css/app.css">
 </head>
@@ -22,7 +22,7 @@
     <button class="sb-item active" data-view="dashboard"><span class="icon">📊</span> Dashboard</button>
 
     <div class="sb-group">REACH Compliance</div>
-    <button class="sb-item" data-view="reach"><span class="icon">⚗️</span> REACH Engine <span class="badge" style="background:var(--purple-d);color:var(--purple)">AI</span></button>
+    <button class="sb-item" data-view="reach"><span class="icon">⚗️</span> Registration Workflow <span class="badge" style="background:var(--purple-d);color:var(--purple)">AI</span></button>
     <button class="sb-item" data-view="alerts"><span class="icon">🔔</span> Regulatory Alerts <span class="badge" style="background:var(--red-d);color:var(--red)">6</span></button>
 
     <div class="sb-group">Green Hydrogen</div>
@@ -32,7 +32,8 @@
     <button class="sb-item" data-view="settings"><span class="icon">⚙️</span> Settings</button>
   </nav>
   <div class="sb-footer">
-    <a href="index.html">threeworlds.eu</a> · v0.2.0<br>© 2026 BelgaLabs<br>
+    <a href="index.html">threeworlds.eu</a> · v1.0.0<br>© 2026 BelgaLabs<br>
+    <span style="color:var(--purple);font-size:.6rem">Powered by 3Worlds AI</span><br>
     <span style="color:var(--gold);font-size:.6rem">Chemistry. Capital. Community.</span>
   </div>
 </aside>
@@ -44,7 +45,7 @@
     <div class="tb-breadcrumb" id="tbBreadcrumb"><span>Platform</span><span class="sep">›</span><span class="current">Dashboard</span></div>
   </div>
   <div class="tb-right">
-    <button class="tb-copilot" id="copilotToggle">🤖 AI Copilot</button>
+    <button class="tb-copilot" id="copilotToggle">🧠 3Worlds AI</button>
     <span class="tb-badge">Demo</span>
     <a href="platform.html#pricing" class="tb-btn">Upgrade</a>
   </div>
@@ -55,8 +56,8 @@
 
 <!-- ══════ DASHBOARD ══════ -->
 <div class="view active" id="view-dashboard">
-  <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.2rem">Chemical Intelligence Platform</h2>
-  <p style="color:var(--t2);margin-bottom:1.25rem;font-size:.85rem">AI-powered REACH compliance, IUCLID dossier generation, and hydrogen project assessment.</p>
+  <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.2rem">REACH Registration Platform</h2>
+  <p style="color:var(--t2);margin-bottom:1.25rem;font-size:.85rem">Powered by <strong style="color:var(--gold)">3Worlds AI</strong> — guided registration workflow with real AI intelligence for dossier preparation and submission.</p>
 
   <div class="stats-grid">
     <div class="card stat-card"><div class="stat-num" style="color:var(--gold)" data-count="11">0</div><div class="stat-label">Substances in DB</div></div>
@@ -70,22 +71,20 @@
     <div class="card">
       <div class="card-header"><span class="card-title">Quick Actions</span></div>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-        <button class="btn btn-gold" onclick="switchView('reach')">⚗️ Analyze Substance</button>
-        <button class="btn btn-blue" onclick="switchView('reach');setTimeout(()=>switchReachTab('esds'),100)">📄 Generate eSDS</button>
-        <button class="btn btn-purple" onclick="switchView('reach');setTimeout(()=>switchReachTab('iuclid'),100)">💾 IUCLID Export</button>
+        <button class="btn btn-gold" onclick="switchView('reach')">🧠 Start Registration Workflow</button>
+        <button class="btn btn-purple" onclick="toggleCopilot()">🧠 Open 3Worlds AI</button>
         <button class="btn btn-outline" onclick="switchView('h2')">⚡ H₂ Assessment</button>
-        <button class="btn btn-outline" onclick="toggleCopilot()">🤖 Open AI Copilot</button>
       </div>
     </div>
     <div class="card">
       <div class="card-header"><span class="card-title">Platform Capabilities</span></div>
       <div style="font-size:.75rem;color:var(--t2);line-height:1.7">
-        ✓ Substance identity & CLP classification<br>
-        ✓ IUCLID endpoint gap analysis by tonnage band<br>
-        ✓ Exposure scenarios with RCR calculation<br>
-        ✓ Read-across (RAAF) assessment<br>
+        ✓ 5-step guided registration workflow<br>
+        ✓ Real AI dossier drafting (CSR, eSDS, RSS)<br>
+        ✓ AI-powered gap analysis & waiver strategy<br>
         ✓ IUCLID XML export for submission<br>
-        ✓ AI regulatory copilot
+        ✓ Submission readiness assessment<br>
+        ✓ 3Worlds AI regulatory copilot
       </div>
     </div>
   </div>
@@ -100,67 +99,20 @@
   </div>
 </div>
 
-<!-- ══════ REACH ENGINE ══════ -->
+<!-- ══════ REACH REGISTRATION WORKFLOW ══════ -->
 <div class="view" id="view-reach">
-  <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.8rem">REACH Engine</h2>
-  <div class="tabs">
-    <button class="tab active" data-reach-tab="search">Substance Search</button>
-    <button class="tab" data-reach-tab="dossier">Dossier Completeness</button>
-    <button class="tab" data-reach-tab="exposure">Exposure Scenarios</button>
-    <button class="tab" data-reach-tab="readacross">Read-Across</button>
-    <button class="tab" data-reach-tab="esds">eSDS Generator</button>
-    <button class="tab" data-reach-tab="iuclid">IUCLID Export</button>
-    <button class="tab" data-reach-tab="submission">Submission Readiness</button>
-  </div>
-
-  <div class="tab-content active" id="reach-search">
+  <div class="wf-intro" id="reachIntro">
+    <div style="text-align:center;padding:2rem 0 1rem">
+      <div style="font-size:2.5rem;margin-bottom:.5rem">🧠</div>
+      <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.4rem">REACH Registration Workflow</h2>
+      <p style="color:var(--t2);font-size:.85rem;max-width:600px;margin:0 auto .5rem">Powered by <strong style="color:var(--gold)">3Worlds AI</strong> — guided 5-step registration with real AI intelligence that drafts regulatory documents, analyzes data gaps, and prepares your submission.</p>
+      <p style="color:var(--t3);font-size:.72rem">Select a substance below to start the guided workflow</p>
+    </div>
     <div class="search-wrap"><span class="search-icon">🔍</span><input class="input" id="substanceSearch" placeholder="Search by CAS, EC number, name, or formula..." autocomplete="off"></div>
     <div id="searchResults" class="substance-list"></div>
-    <div id="substanceDetail" style="display:none"></div>
   </div>
-
-  <div class="tab-content" id="reach-dossier">
-    <div style="margin-bottom:1rem"><p style="font-size:.85rem;color:var(--t2)">Select a substance from the search tab, then click "Dossier Analysis" — or choose below:</p>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem" id="dossierSubstanceButtons"></div></div>
-    <div id="dossierContent"></div>
-  </div>
-
-  <div class="tab-content" id="reach-exposure">
-    <div style="margin-bottom:1rem"><p style="font-size:.85rem;color:var(--t2)">Exposure scenarios with contributing scenarios, operational conditions, risk management measures, and RCR calculations.</p>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem" id="exposureSubstanceButtons"></div></div>
-    <div id="exposureContent"></div>
-  </div>
-
-  <div class="tab-content" id="reach-readacross">
-    <div style="margin-bottom:1rem"><p style="font-size:.85rem;color:var(--t2)">RAAF-compliant read-across groups with structural justification, applicable endpoints, and regulatory precedent.</p>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem" id="readAcrossSubstanceButtons"></div></div>
-    <div id="readAcrossContent"></div>
-  </div>
-
-  <div class="tab-content" id="reach-esds">
-    <div class="card" style="margin-bottom:1rem">
-      <div class="card-title" style="margin-bottom:.6rem">Generate Extended Safety Data Sheet (eSDS)</div>
-      <p style="font-size:.75rem;color:var(--t2);margin-bottom:.6rem">Compliant with Regulation (EU) 2020/878 amending REACH Annex II. Includes all 16 sections with substance-specific content derived from the regulatory database.</p>
-      <div class="form-row">
-        <div class="form-group"><label class="form-label">Substance</label><select class="input" id="sdsSubstance"></select></div>
-        <div class="form-group"><label class="form-label">Language</label><select class="input" id="sdsLang"><option value="en">English</option><option value="de">Deutsch</option><option value="fr">Français</option><option value="nl">Nederlands</option><option value="es">Español</option></select></div>
-      </div>
-      <button class="btn btn-blue" id="generateSds">📄 Generate eSDS</button>
-    </div>
-    <div id="sdsPreview"></div>
-  </div>
-
-  <div class="tab-content" id="reach-iuclid">
-    <div style="margin-bottom:1rem"><p style="font-size:.85rem;color:var(--t2)">Generate IUCLID 6-compatible XML fragments for dossier import. Select a substance to begin.</p>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem" id="iuclidSubstanceButtons"></div></div>
-    <div id="iuclidContent"></div>
-  </div>
-
-  <div class="tab-content" id="reach-submission">
-    <div style="margin-bottom:1rem"><p style="font-size:.85rem;color:var(--t2)">Pre-submission checklist verifying all requirements for ECHA REACH-IT submission.</p>
-    <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem" id="submissionSubstanceButtons"></div></div>
-    <div id="submissionContent"></div>
-  </div>
+  <div id="workflowContainer" style="display:none"></div>
+  <div id="substanceDetail" style="display:none"></div>
 </div>
 
 <!-- ══════ H2 INTELLIGENCE ══════ -->
@@ -225,19 +177,21 @@
 <!-- ═══ AI COPILOT PANEL ═══ -->
 <div class="copilot-panel" id="copilotPanel">
   <div class="cp-header">
-    <div class="cp-title"><span class="ai-dot"></span> REACH Regulatory Copilot</div>
+    <div class="cp-title"><span class="ai-dot"></span> 3Worlds AI</div>
+    <button class="cp-clear" onclick="clearCopilotHistory()" title="Clear conversation">🗑</button>
     <button class="cp-close" onclick="toggleCopilot()">✕</button>
   </div>
   <div class="cp-messages" id="copilotMessages"></div>
   <div class="cp-suggestions">
     <button class="cp-sug">Analyze dossier gaps</button>
-    <button class="cp-sug">Waiver strategies</button>
-    <button class="cp-sug">Read-across options</button>
-    <button class="cp-sug">SVHC status</button>
+    <button class="cp-sug">Draft waiver justification</button>
+    <button class="cp-sug">Read-across assessment</button>
+    <button class="cp-sug">Draft CSR section</button>
+    <button class="cp-sug">Exposure scenario</button>
     <button class="cp-sug">Submission readiness</button>
   </div>
   <div class="cp-input-area">
-    <textarea class="cp-input" id="copilotInput" rows="2" placeholder="Ask about REACH compliance..."></textarea>
+    <textarea class="cp-input" id="copilotInput" rows="2" placeholder="Ask 3Worlds AI anything about REACH..."></textarea>
     <button class="cp-send" id="copilotSend">→</button>
   </div>
 </div>
@@ -258,19 +212,5 @@
 <script src="js/copilot.js"></script>
 <script src="js/esds-generator.js"></script>
 <script src="js/app-init.js"></script>
-<script>
-// Populate substance quick-select buttons on tabs that need them
-document.addEventListener('DOMContentLoaded',()=>{
-  ['dossier','exposure','readAcross','iuclid','submission'].forEach(tab=>{
-    const container=document.getElementById(tab+'SubstanceButtons');
-    if(!container)return;
-    CHEMICALS_DB.forEach(c=>{
-      const b=document.createElement('button');b.className='btn btn-outline btn-sm';b.textContent=c.name;
-      const fn={dossier:renderDossierCompleteness,exposure:renderExposureScenarios,readAcross:renderReadAcross,iuclid:renderIUCLID,submission:renderSubmissionReadiness}[tab];
-      b.addEventListener('click',()=>fn(c.cas));container.appendChild(b);
-    });
-  });
-});
-</script>
 </body>
 </html>
