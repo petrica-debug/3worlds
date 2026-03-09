@@ -406,84 +406,159 @@ function renderStep3_Gaps(container) {
     </div>`;
 }
 
-// ─── STEP 4: AI DOSSIER DRAFTING ────────────────────────────────────────
+// ─── STEP 4: DOSSIER DRAFTING & FILE GENERATION ─────────────────────────
 function renderStep4_Draft(container) {
   const c = workflowState.substance;
   const band = TONNAGE_BANDS[c.tonnageBand];
-  const scenarios = EXPOSURE_SCENARIOS[c.cas];
-  const dnelData = DNEL_PNEC[c.cas];
+
+  const iuclidFiles = typeof getIUCLIDFileList === 'function' ? getIUCLIDFileList(c) : [];
+  const xmlCount = iuclidFiles.length;
 
   container.innerHTML = `
     <div class="wf-step-header">
-      <h3>Step 4: AI Dossier Drafting</h3>
-      <p>Generate regulatory documents using 3Worlds AI. Each document is a professional draft ready for expert review.</p>
+      <h3>Step 4: Dossier Drafting & Submission Files</h3>
+      <p>Generate all IUCLID XML files and regulatory documents needed for ECHA submission. Download, review, sign, and upload to REACH-IT.</p>
     </div>
 
-    <div class="wf-doc-grid">
-      <div class="wf-doc-card" onclick="generateDoc('csr')">
-        <div class="wf-doc-icon">📊</div>
-        <div class="wf-doc-title">Chemical Safety Report</div>
-        <div class="wf-doc-desc">AI-drafted CSR with hazard assessment, exposure assessment, and risk characterisation.</div>
-        <span class="pill pill-gold">AI Generated</span>
+    <div class="wf-grid-3">
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--green)">${xmlCount}</div>
+        <div class="wf-metric-label">IUCLID XML Files</div>
+        <div class="wf-metric-sub">Ready for IUCLID 6 import</div>
       </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('esds')">
-        <div class="wf-doc-icon">📄</div>
-        <div class="wf-doc-title">Extended Safety Data Sheet</div>
-        <div class="wf-doc-desc">Full 16-section eSDS per Regulation (EU) 2020/878 with exposure scenarios.</div>
-        <span class="pill pill-gold">AI Generated</span>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--gold)">3</div>
+        <div class="wf-metric-label">AI Documents</div>
+        <div class="wf-metric-sub">CSR, eSDS, Inquiry Letter</div>
       </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('iuclid')">
-        <div class="wf-doc-icon">💾</div>
-        <div class="wf-doc-title">IUCLID XML Files</div>
-        <div class="wf-doc-desc">Section 1 (Identity), CLP, PhysChem, CSR Summary — ready for IUCLID import.</div>
-        <span class="pill pill-blue">XML Export</span>
-      </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('waiver')">
-        <div class="wf-doc-icon">📝</div>
-        <div class="wf-doc-title">Waiver Justifications</div>
-        <div class="wf-doc-desc">AI-drafted Annex XI justification texts for waived endpoints.</div>
-        <span class="pill pill-gold">AI Generated</span>
-      </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('readacross')">
-        <div class="wf-doc-icon">🔗</div>
-        <div class="wf-doc-title">Read-Across Justification</div>
-        <div class="wf-doc-desc">RAAF-compliant read-across report with data matrix and hypothesis.</div>
-        <span class="pill pill-gold">AI Generated</span>
-      </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('exposure')">
-        <div class="wf-doc-icon">🏭</div>
-        <div class="wf-doc-title">Exposure Scenarios</div>
-        <div class="wf-doc-desc">Contributing scenarios with OCs, RMMs, and RCR calculations.</div>
-        <span class="pill pill-gold">AI Generated</span>
-      </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('robust')">
-        <div class="wf-doc-icon">🔬</div>
-        <div class="wf-doc-title">Robust Study Summaries</div>
-        <div class="wf-doc-desc">AI-drafted RSS templates for key endpoint study records.</div>
-        <span class="pill pill-gold">AI Generated</span>
-      </div>
-
-      <div class="wf-doc-card" onclick="generateDoc('inquiry')">
-        <div class="wf-doc-icon">📨</div>
-        <div class="wf-doc-title">ECHA Inquiry Letter</div>
-        <div class="wf-doc-desc">Pre-registration inquiry to ECHA for data sharing (Article 26).</div>
-        <span class="pill pill-gold">AI Generated</span>
+      <div class="card wf-metric-card">
+        <div class="wf-metric-val" style="color:var(--blue)">${band?.annex || '—'}</div>
+        <div class="wf-metric-label">REACH Annex</div>
+        <div class="wf-metric-sub">${band?.label || ''}</div>
       </div>
     </div>
 
-    <div id="docPreviewArea" style="margin-top:1rem"></div>
+    <div class="card" style="margin-top:.8rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+        <div class="card-title" style="margin-bottom:0">IUCLID 6 Submission Package</div>
+        <button class="btn btn-gold btn-sm" onclick="downloadIUCLIDPackage('${c.cas}')">Download All XML Files</button>
+      </div>
+      <p style="font-size:.75rem;color:var(--t2);margin-bottom:.8rem">These XML files follow IUCLID 6 schema and can be imported directly into your IUCLID installation. Review and edit before submission via REACH-IT.</p>
+      <div class="file-grid">
+        ${iuclidFiles.map((f, i) => `<div class="file-card" onclick="previewIUCLIDFile(${i},'${c.cas}')">
+          <div class="file-icon file-icon-xml">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="file-info">
+            <div class="file-name">${f.name}</div>
+            <div class="file-desc">${f.description}</div>
+            <div class="file-status"><span class="pill pill-green" style="margin:0">Ready</span></div>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:.8rem">
+      <div class="card-title">AI-Generated Regulatory Documents</div>
+      <p style="font-size:.75rem;color:var(--t2);margin-bottom:.8rem">Use 3Worlds AI to draft professional regulatory documents. Click to generate via AI — each document is a starting draft for expert review.</p>
+      <div class="wf-doc-grid">
+        <div class="wf-doc-card" onclick="generateDoc('csr')">
+          <div class="wf-doc-icon">📊</div>
+          <div class="wf-doc-title">Chemical Safety Report</div>
+          <div class="wf-doc-desc">Full CSR with hazard, exposure, and risk characterisation.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('esds')">
+          <div class="wf-doc-icon">📄</div>
+          <div class="wf-doc-title">Extended SDS</div>
+          <div class="wf-doc-desc">16-section eSDS per Regulation (EU) 2020/878.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('waiver')">
+          <div class="wf-doc-icon">📝</div>
+          <div class="wf-doc-title">Waiver Justifications</div>
+          <div class="wf-doc-desc">Annex XI justifications for waived endpoints.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('readacross')">
+          <div class="wf-doc-icon">🔗</div>
+          <div class="wf-doc-title">Read-Across Report</div>
+          <div class="wf-doc-desc">RAAF-compliant read-across justification.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('exposure')">
+          <div class="wf-doc-icon">🏭</div>
+          <div class="wf-doc-title">Exposure Scenarios</div>
+          <div class="wf-doc-desc">Contributing scenarios, OCs, RMMs, RCRs.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('robust')">
+          <div class="wf-doc-icon">🔬</div>
+          <div class="wf-doc-title">Robust Study Summaries</div>
+          <div class="wf-doc-desc">RSS templates for endpoint study records.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('inquiry')">
+          <div class="wf-doc-icon">📨</div>
+          <div class="wf-doc-title">ECHA Inquiry Letter</div>
+          <div class="wf-doc-desc">Article 26 pre-registration inquiry.</div>
+          <span class="pill pill-gold">AI Draft</span>
+        </div>
+        <div class="wf-doc-card" onclick="generateDoc('iuclid_old')">
+          <div class="wf-doc-icon">💾</div>
+          <div class="wf-doc-title">Legacy XML Export</div>
+          <div class="wf-doc-desc">Original 4-file IUCLID export.</div>
+          <span class="pill pill-blue">XML</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="docPreviewArea" style="margin-top:.8rem"></div>
 
     <div class="wf-actions">
       <button class="btn btn-outline" onclick="goToStep(2)">← Back</button>
-      <button class="btn btn-purple" onclick="askCopilot('For ${c.name} (CAS ${c.cas}), generate a complete Chemical Safety Report (CSR) outline following ECHA Guidance on Information Requirements (Chapter R). Include: Part A (risk management measures summary), Part B (hazard assessment for each endpoint with available data, exposure assessment with DNELs/PNECs, risk characterisation). Make it detailed and regulatory-quality.')">🧠 AI: Draft Full CSR</button>
+      <button class="btn btn-purple" onclick="askCopilot('For ${c.name} (CAS ${c.cas}), generate a complete Chemical Safety Report (CSR) outline following ECHA Guidance on Information Requirements (Chapter R). Include: Part A (risk management measures summary), Part B (hazard assessment for each endpoint with available data, exposure assessment with DNELs/PNECs, risk characterisation). Make it detailed and regulatory-quality.')">AI: Draft Full CSR</button>
       <button class="btn btn-gold" onclick="nextStep()">Continue to Submission →</button>
     </div>`;
+}
+
+function previewIUCLIDFile(idx, cas) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas);
+  if (!c || typeof generateAllIUCLIDFiles !== 'function') return;
+  const files = generateAllIUCLIDFiles(c);
+  if (!files[idx]) return;
+  const f = files[idx];
+  const xml = f.xml;
+  const highlighted = xml.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/(&lt;\/?[\w:]+)/g, '<span class="tag">$1</span>')
+    .replace(/([\w:-]+)=/g, '<span class="attr">$1</span>=')
+    .replace(/"([^"]*)"/g, '"<span class="val">$1</span>"');
+
+  const area = document.getElementById('docPreviewArea');
+  area.innerHTML = `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+      <div>
+        <div style="font-weight:700;font-size:.85rem">${f.name}</div>
+        <div style="font-size:.68rem;color:var(--t3)">${f.filename} — ${f.description}</div>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="downloadSingleIUCLIDFile(${idx},'${cas}')">Download</button>
+    </div>
+    <div class="xml-preview">${highlighted}</div>
+  </div>`;
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function downloadSingleIUCLIDFile(idx, cas) {
+  const c = CHEMICALS_DB.find(x => x.cas === cas);
+  if (!c || typeof generateAllIUCLIDFiles !== 'function') return;
+  const files = generateAllIUCLIDFiles(c);
+  if (!files[idx]) return;
+  const f = files[idx];
+  const blob = new Blob([f.xml], { type: 'application/xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = f.filename;
+  a.click();
 }
 
 function generateDoc(type) {
@@ -491,7 +566,7 @@ function generateDoc(type) {
   const prompts = {
     csr: `Generate a detailed Chemical Safety Report (CSR) for ${c.name} (CAS ${c.cas}). Structure it per ECHA guidance: 1) Substance identity, 2) Hazard classification summary, 3) Environmental hazard assessment (PNECs), 4) Human health hazard assessment (DNELs), 5) Exposure assessment summary, 6) Risk characterisation. Use the substance data I provided. Make it professional regulatory quality.`,
     esds: `Generate the key sections of an extended Safety Data Sheet for ${c.name} (CAS ${c.cas}) per Regulation (EU) 2020/878. Focus on Sections 1-3, 8, 11, 14, and 15 with substance-specific content. Include proper regulatory references.`,
-    iuclid: 'iuclid_export',
+    iuclid_old: 'iuclid_export',
     waiver: `For ${c.name} (CAS ${c.cas}), draft Annex XI waiver justification texts for all waived endpoints. For each waiver, provide: 1) Legal basis (specific Annex XI section), 2) Scientific justification (why testing is not needed), 3) Supporting evidence, 4) Conclusion. Format each as a standalone text that could be pasted into IUCLID.`,
     readacross: `For ${c.name} (CAS ${c.cas}), draft a RAAF-compliant read-across justification. Include: 1) Hypothesis (which RAAF scenario applies), 2) Source and target substance identification, 3) Structural similarity assessment, 4) Mechanistic plausibility, 5) Data matrix showing available data, 6) Uncertainty analysis, 7) Conclusion on acceptability.`,
     exposure: `For ${c.name} (CAS ${c.cas}), draft exposure scenarios for the main identified uses. For each scenario include: 1) Title and use descriptor, 2) Contributing scenarios with PROC/ERC, 3) Operational conditions (duration, frequency, concentration), 4) Risk management measures (PPE, LEV), 5) Exposure estimates, 6) RCR calculations. Use ECETOC TRA methodology.`,
@@ -499,7 +574,7 @@ function generateDoc(type) {
     inquiry: `Draft an ECHA pre-registration inquiry letter for ${c.name} (CAS ${c.cas}) under Article 26 of REACH. Include: 1) Substance identity, 2) Tonnage band, 3) Request for existing registrant data, 4) Willingness to share costs, 5) Contact details placeholder. Make it formal and ready to submit.`
   };
 
-  if (type === 'iuclid') {
+  if (type === 'iuclid_old') {
     renderIUCLIDExport(c);
     return;
   }
@@ -639,7 +714,8 @@ function renderStep5_Submit(container) {
     <div class="wf-actions">
       <button class="btn btn-outline" onclick="goToStep(3)">← Back</button>
       <button class="btn btn-purple" onclick="askCopilot('Generate a complete submission readiness report for ${c.name} (CAS ${c.cas}). For each checklist item that is not passing, provide: 1) What exactly is needed, 2) How to fix it, 3) Estimated time to resolve. Then provide an overall assessment: Is this dossier ready for submission? What are the blocking issues? What is the recommended timeline to submission?')">🧠 AI: Readiness Report</button>
-      <button class="btn btn-gold" onclick="downloadAllXml('${c.cas}')">💾 Download All IUCLID Files</button>
+      <button class="btn btn-green" onclick="downloadIUCLIDPackage('${c.cas}')">Download Full IUCLID Package (${typeof getIUCLIDFileList === 'function' ? getIUCLIDFileList(c).length : 4} files)</button>
+      <button class="btn btn-gold" onclick="downloadAllXml('${c.cas}')">Download Legacy XML</button>
     </div>`;
 }
 
