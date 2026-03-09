@@ -43,8 +43,8 @@ function toggleCopilot() {
   const btn = document.getElementById('copilotToggle');
   const main = document.querySelector('.main');
   panel.classList.toggle('open');
-  btn.classList.toggle('active');
-  main.classList.toggle('copilot-open');
+  if (btn) btn.classList.toggle('active');
+  if (main) main.classList.toggle('ai-open');
 }
 
 function initCopilot() {
@@ -210,7 +210,9 @@ async function callAI(userMessage) {
 function updateSendButton() {
   const btn = document.getElementById('copilotSend');
   if (btn) {
-    btn.textContent = aiLoading ? '...' : '→';
+    btn.innerHTML = aiLoading
+      ? '<div class="ai-loading" style="margin:0"><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span></div>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
     btn.disabled = aiLoading;
   }
 }

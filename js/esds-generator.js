@@ -200,7 +200,7 @@ function generateESDS(){
     Aquatic toxicity: ${c.clp.filter(x=>x.includes('Aquatic')).join('; ')||'Not classified as hazardous to the aquatic environment'}<br>
     ${dnelData?`PNEC freshwater: ${dnelData.pnecFreshwater!==null?dnelData.pnecFreshwater+' mg/L':'N/A'}<br>PNEC marine: ${dnelData.pnecMarine!==null?dnelData.pnecMarine+' mg/L':'N/A'}<br>`:''}<br>
     <strong>12.2 Persistence and degradability</strong><br>
-    ${c.dossierCompleteness?.biodeg==='complete'?'Biodegradation data available in the REACH dossier.':'Data not available in this demo.'}<br><br>
+    ${c.dossierCompleteness?.biodeg==='complete'?'Biodegradation data available in the REACH dossier.':'Data not yet available — refer to REACH dossier.'}<br><br>
     <strong>12.3 Bioaccumulative potential</strong><br>
     Log Kow: ${pc.logP!==null?pc.logP:'N/A'}. ${pc.logP!==null&&pc.logP>3?'Potential for bioaccumulation (log Kow > 3). BCF data should be consulted.':'Low bioaccumulation potential.'}<br><br>
     <strong>12.4 Mobility in soil</strong><br>
@@ -269,8 +269,8 @@ function generateESDS(){
     <div><h3 style="font-size:1rem;font-weight:700">Extended Safety Data Sheet — ${c.name}</h3>
     <div style="font-size:.72rem;color:var(--t3)">Per Regulation (EU) 2020/878 amending REACH Annex II · ${c.reach?'Reg. '+c.reach:''}</div></div>
     <div style="display:flex;gap:.4rem">
-      <button class="btn btn-outline btn-sm" onclick="showUpgrade('PDF export requires a Professional plan.')">📄 Export PDF</button>
-      <button class="btn btn-outline btn-sm" onclick="showUpgrade('DOCX export requires a Professional plan.')">📝 Export DOCX</button>
+      <button class="btn btn-outline btn-sm" onclick="alert('PDF export coming soon')">Export PDF</button>
+      <button class="btn btn-outline btn-sm" onclick="alert('DOCX export coming soon')">Export DOCX</button>
     </div></div>`+
     sections.map((content,i)=>`<div class="sds-section" onclick="this.classList.toggle('open')">
       <div class="sds-section-header"><span><span class="sds-num">${i+1}.</span>${SDS_SECTION_TITLES[i]}</span><span class="sds-chevron">▸</span></div>
