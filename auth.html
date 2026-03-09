@@ -11,30 +11,30 @@
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --bg: #09090b;
-      --surface-1: #111113;
-      --surface-2: #18181b;
-      --surface-3: #27272a;
-      --gold: #d4a843;
-      --gold-light: #e0b82e;
-      --gold-dim: rgba(212, 168, 67, 0.1);
-      --gold-glow: rgba(212, 168, 67, 0.06);
-      --text: #fafaf9;
-      --text-secondary: #a1a1aa;
-      --text-muted: #52525b;
-      --error: #f87171;
-      --success: #34d399;
-      --border: rgba(255, 255, 255, 0.06);
-      --border-focus: rgba(212, 168, 67, 0.4);
-      --radius: 10px;
-      --transition: 180ms ease;
+      --bg: #f5f6f8;
+      --surface-1: #ffffff;
+      --surface-2: #f0f1f3;
+      --surface-3: #e5e7eb;
+      --gold: #c49a2a;
+      --gold-light: #d4a843;
+      --gold-dim: rgba(196, 154, 42, 0.08);
+      --gold-glow: rgba(196, 154, 42, 0.08);
+      --text: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --error: #dc2626;
+      --success: #16a34a;
+      --border: #e5e7eb;
+      --border-focus: rgba(196, 154, 42, 0.5);
+      --radius: 8px;
+      --transition: 150ms ease;
     }
 
     html { height: 100%; }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
+      background: #f5f6f8;
       color: var(--text);
       height: 100%;
       overflow: hidden;
@@ -182,7 +182,7 @@
       align-items: center;
       padding: 2rem;
       overflow-y: auto;
-      background: var(--bg);
+      background: #fff;
     }
 
     .form-container {
@@ -219,7 +219,7 @@
     /* ── Tab Toggle ── */
     .auth-tabs {
       display: flex;
-      background: var(--surface-1);
+      background: var(--surface-2);
       border-radius: var(--radius);
       padding: 4px;
       margin-bottom: 1.75rem;
@@ -234,16 +234,16 @@
       color: var(--text-secondary);
       background: transparent;
       border: none;
-      border-radius: 7px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all var(--transition);
       font-family: inherit;
     }
 
     .auth-tab--active {
-      background: var(--surface-2);
+      background: #fff;
       color: var(--text);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
 
     .auth-tab:not(.auth-tab--active):hover {
@@ -283,7 +283,7 @@
       font-size: 0.9rem;
       font-family: inherit;
       color: var(--text);
-      background: var(--surface-1);
+      background: #fff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       outline: none;
@@ -294,7 +294,7 @@
 
     .form-input:focus {
       border-color: var(--border-focus);
-      background: var(--surface-2);
+      background: #fff;
       box-shadow: 0 0 0 3px var(--gold-glow);
     }
 
@@ -303,7 +303,7 @@
 
     .form-input.input--error {
       border-color: var(--error);
-      box-shadow: 0 0 0 3px rgba(229, 77, 77, 0.08);
+      box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.06);
     }
 
     .password-toggle {
@@ -354,8 +354,8 @@
       font-size: 0.9rem;
       font-weight: 600;
       font-family: inherit;
-      color: #0a0a0f;
-      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+      color: #fff;
+      background: var(--gold);
       border: none;
       border-radius: var(--radius);
       cursor: pointer;
@@ -369,8 +369,8 @@
     }
 
     .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 4px 20px rgba(201, 162, 39, 0.25);
-      transform: translateY(-1px);
+      background: #b8892a;
+      box-shadow: 0 4px 12px rgba(196, 154, 42, 0.2);
     }
 
     .btn-primary:active:not(:disabled) { transform: translateY(0); }
@@ -383,8 +383,8 @@
     .btn-spinner {
       width: 18px;
       height: 18px;
-      border: 2px solid rgba(10, 10, 15, 0.2);
-      border-top-color: #0a0a0f;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
       display: none;
@@ -428,15 +428,15 @@
     .alert.visible { display: flex; }
 
     .alert--error {
-      background: rgba(229, 77, 77, 0.08);
-      border: 1px solid rgba(229, 77, 77, 0.15);
-      color: #f08080;
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.12);
+      color: #dc2626;
     }
 
     .alert--success {
-      background: rgba(52, 199, 89, 0.08);
-      border: 1px solid rgba(52, 199, 89, 0.15);
-      color: #6dd58c;
+      background: rgba(22, 163, 74, 0.06);
+      border: 1px solid rgba(22, 163, 74, 0.12);
+      color: #16a34a;
     }
 
     .alert svg { flex-shrink: 0; margin-top: 1px; }
@@ -463,14 +463,15 @@
     }
 
     .modal {
-      background: var(--surface-1);
+      background: #fff;
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 12px;
       padding: 2rem;
       width: 100%;
       max-width: 420px;
       transform: translateY(10px) scale(0.98);
       transition: transform 250ms ease;
+      box-shadow: 0 20px 60px rgba(0,0,0,.15);
     }
 
     .modal-overlay.visible .modal {
@@ -503,7 +504,7 @@
       font-weight: 500;
       font-family: inherit;
       color: var(--text-secondary);
-      background: var(--surface-2);
+      background: #fff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       cursor: pointer;
@@ -512,7 +513,7 @@
 
     .btn-secondary:hover {
       color: var(--text);
-      border-color: rgba(255,255,255,0.1);
+      border-color: #d1d5db;
     }
 
     .modal .btn-primary { flex: 1; }
@@ -577,7 +578,7 @@
     /* Scrollbar */
     .form-panel::-webkit-scrollbar { width: 6px; }
     .form-panel::-webkit-scrollbar-track { background: transparent; }
-    .form-panel::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+    .form-panel::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   </style>
 </head>
 <body>

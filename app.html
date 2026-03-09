@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="theme-color" content="#ffffff">
 <title>3Worlds — REACH Registration Platform</title>
 <meta name="description" content="AI-powered REACH registration workflow with guided dossier preparation, gap analysis, and submission.">
 <link rel="icon" type="image/svg+xml" href="assets/favicons/favicon.svg">
@@ -74,28 +74,40 @@
   </div>
 
   <div class="kpi-grid">
-    <div class="kpi"><div class="kpi-val" style="color:var(--gold)" data-count="11">0</div><div class="kpi-label">Substances</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:var(--blue)" data-count="4">0</div><div class="kpi-label">IUCLID Templates</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:var(--red)" data-count="6">0</div><div class="kpi-label">Active Alerts</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:var(--green)" data-count="16">0</div><div class="kpi-label">eSDS Sections</div></div>
+    <div class="kpi">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6l3 7-6 11-6-11z"/><circle cx="12" cy="10" r="2"/></svg></div>
+      <div class="kpi-content"><div class="kpi-val" data-count="11">0</div><div class="kpi-label">Substances</div><div class="kpi-trend up">+3 this month</div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="kpi-content"><div class="kpi-val" data-count="10">0</div><div class="kpi-label">IUCLID Files</div><div class="kpi-trend up">Per substance</div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+      <div class="kpi-content"><div class="kpi-val" data-count="6">0</div><div class="kpi-label">Active Alerts</div><div class="kpi-trend down">2 critical</div></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <div class="kpi-content"><div class="kpi-val" data-count="16">0</div><div class="kpi-label">eSDS Sections</div><div class="kpi-trend up">All complete</div></div>
+    </div>
   </div>
 
   <div class="dash-grid">
     <div class="card">
       <h3 class="card-title">Quick Actions</h3>
       <div class="qa-grid">
-        <button class="qa-btn" onclick="switchView('reach')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M9 3h6l3 7-6 11-6-11z"/><circle cx="12" cy="10" r="2"/></svg><span>New Registration</span></button>
-        <button class="qa-btn" onclick="toggleCopilot()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M12 2a4 4 0 014 4v1a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M6 10v2a6 6 0 0012 0v-2"/></svg><span>Ask AI</span></button>
-        <button class="qa-btn" onclick="switchView('alerts')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span>View Alerts</span></button>
+        <button class="qa-btn" onclick="switchView('reach')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3h6l3 7-6 11-6-11z"/><circle cx="12" cy="10" r="2"/></svg><span>New Registration</span></button>
+        <button class="qa-btn" onclick="toggleCopilot()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a4 4 0 014 4v1a4 4 0 01-8 0V6a4 4 0 014-4z"/><path d="M6 10v2a6 6 0 0012 0v-2"/></svg><span>Ask AI</span></button>
+        <button class="qa-btn" onclick="switchView('alerts')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg><span>View Alerts</span></button>
       </div>
     </div>
     <div class="card">
-      <h3 class="card-title">Platform</h3>
+      <h3 class="card-title">Platform Capabilities</h3>
       <ul class="feature-list">
         <li>5-step guided registration workflow</li>
         <li>AI dossier drafting (CSR, eSDS, RSS)</li>
         <li>Gap analysis and waiver strategy</li>
-        <li>IUCLID XML export</li>
+        <li>Full IUCLID 6 XML file generation (10 files)</li>
         <li>Submission readiness assessment</li>
       </ul>
     </div>
