@@ -1,5 +1,5 @@
 """
-Three Worlds Chemical Intelligence — AI Engine
+Three Worlds (Chemistry. Capital. Community.) — AI Engine
 
 Core AI components:
 - CLP Classifier: QSAR-based hazard classification

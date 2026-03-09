@@ -1,10 +1,10 @@
 # Three Worlds
 
-**Science. Capital. Community.**
+**Chemistry. Capital. Community.**
 
 The personal platform of [Petrica Dulgheru](https://www.linkedin.com/in/petrica-dulgheru/) — Roma entrepreneur, chemist, fund builder, and full-stack maker based in Brussels.
 
-Three Worlds is the umbrella brand that ties together three domains of expertise: inclusive finance (REDI International), applied science (BelgaLabs), and venture building — all serving one mission: proving that inclusion is bankable infrastructure.
+Three Worlds is the umbrella brand built on three pillars — **Chemistry**, **Capital**, and **Community** — serving one mission: proving that inclusion is bankable infrastructure.
 
 ---
 
@@ -44,14 +44,14 @@ Full brand strategy and guidelines in `docs/brand-strategy.html`.
 
 | Color | Hex | Meaning |
 |-------|-----|---------|
-| Gold | `#b8941f` | Inclusive Finance — trust, warmth |
-| Blue | `#2563eb` | Science & Technology — precision, depth |
-| Green | `#059669` | Venture Building — growth, action |
+| Gold | `#b8941f` | Capital — trust, warmth |
+| Blue | `#2563eb` | Chemistry — precision, depth |
+| Green | `#059669` | Community — growth, action |
 | Cream | `#f6f4ef` | Background — warmth, approachability |
 
 ### Tagline
 
-**Science. Capital. Community.**
+**Chemistry. Capital. Community.**
 
 ---
 
@@ -78,11 +78,11 @@ Full brand strategy and guidelines in `docs/brand-strategy.html`.
 
 ## About
 
-Three Worlds represents three intersecting domains:
+Three Worlds represents three intersecting pillars:
 
-- **REDI International** — €15M+ impact fund for Roma economic empowerment across 8 European countries
-- **BelgaLabs** — consulting at the intersection of catalysis, AI, and social innovation
-- **Advisory & Speaking** — board seats, keynotes, and thought leadership
+- **Chemistry** — PhD-level expertise in catalysis, hydrogen, REACH compliance, and the Chemical Intelligence Platform (BelgaLabs)
+- **Capital** — €15M+ impact fund for Roma economic empowerment across 8 European countries (REDI International)
+- **Community** — Venture building, social enterprises, and aggregator companies that connect marginalized communities to mainstream markets
 
 Built by Petrica Dulgheru. PhD in Chemistry (UCD/ULB). Executive MBA. Self-taught full-stack builder.
 

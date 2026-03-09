@@ -1,5 +1,5 @@
 """
-Three Worlds Chemical Intelligence — API Server
+Three Worlds (Chemistry. Capital. Community.) — API Server
 
 FastAPI application serving the REACH Engine and H2 Intelligence modules.
 """
@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
-    title="Three Worlds Chemical Intelligence",
+    title="Three Worlds — Chemistry. Capital. Community.",
     description="AI-powered REACH compliance and green hydrogen intelligence",
     version="0.1.0",
 )
